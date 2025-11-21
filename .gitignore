@@ -1,0 +1,41 @@
+# Build directories
+engine/build/
+tools/*/build/
+bin/
+obj/
+*.o
+*.exe
+*.out
+*.so
+*.dll
+*.dylib
+
+# IDE files
+.vscode/
+.vs/
+*.suo
+*.user
+*.swp
+*~
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Save files
+saves/**/*.sav
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Test outputs
+tests/build/
+test_results/
+
+# Logs
+*.log
+debug.txt

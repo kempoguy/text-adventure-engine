@@ -29,6 +29,8 @@
  * Main entry point
  */
 int main(int argc, char** argv) {
+    (void)argc; // TODO
+    (void)argv; // TODO
     printf("Text Adventure Engine v1.0\n");
     printf("Initializing...\n\n");
     

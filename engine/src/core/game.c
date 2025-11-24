@@ -62,6 +62,7 @@ bool check_victory_condition(GameState* game) {
  * Display current room
  */
 void look_at_current_room(GameState* game) {
+    (void)game; // TODO
     printf("[STUB] look_at_current_room()\n");
     printf("\nYou are in a test room.\n");
     printf("This is where the room description will appear.\n");

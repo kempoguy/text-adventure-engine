@@ -1,4 +1,5 @@
 #include "manager.h"
+#include "loader.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -65,30 +66,7 @@ Story* select_story(StoryInfo* story_list, int count) {
     
     // Load the selected story
     printf("\nLoading: %s...\n", story_list[choice - 1].title);
-    
-    // For now, return a stub story
-    Story* story = malloc(sizeof(Story));
-    if (!story) {
-        return NULL;
-    }
-    
-    story->metadata = (StoryMetadata){0};
-    strcpy(story->metadata.title, story_list[choice - 1].title);
-    strcpy(story->metadata.author, story_list[choice - 1].author);
-    strcpy(story->metadata.version, story_list[choice - 1].version);
-    strcpy(story->metadata.description, story_list[choice - 1].description);
-    strcpy(story->metadata.start_room, "entrance");
-    story->metadata.max_inventory_weight = 50;
-    story->metadata.victory_score = 1000;
-    strcpy(story->metadata.victory_text, "You win! (This is a stub victory message)");
-    
-    story->rooms = NULL;
-    story->room_count = 0;
-    story->items = NULL;
-    story->item_count = 0;
-    story->npcs = NULL;
-    story->npc_count = 0;
-    strcpy(story->story_dir, story_list[choice - 1].directory);
+    Story* story = load_story(story_list[choice - 1].directory);
     
     return story;
 }

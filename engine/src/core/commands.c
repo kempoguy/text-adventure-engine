@@ -44,23 +44,31 @@ CommandResult execute_command(GameState* game, Command* cmd) {
  */
 
 CommandResult cmd_go(GameState* game, Command* cmd) {
+    (void)game; // TODO
+    (void)cmd; // TODO
     printf("[STUB] You try to go %s.\n", 
            strlen(cmd->noun) > 0 ? cmd->noun : "somewhere");
     return RESULT_OK;
 }
 
 CommandResult cmd_look(GameState* game, Command* cmd) {
+    (void)game; // TODO
+    (void)cmd; // TODO
     look_at_current_room(game);
     return RESULT_OK;
 }
 
 CommandResult cmd_examine(GameState* game, Command* cmd) {
+    (void)game; // TODO
+    (void)cmd; // TODO
     printf("[STUB] You examine the %s.\n", 
            strlen(cmd->noun) > 0 ? cmd->noun : "area");
     return RESULT_OK;
 }
 
 CommandResult cmd_take(GameState* game, Command* cmd) {
+    (void)game; // TODO
+    (void)cmd; // TODO
     if (strlen(cmd->noun) == 0) {
         printf("Take what?\n");
         return RESULT_ERROR;
@@ -70,6 +78,8 @@ CommandResult cmd_take(GameState* game, Command* cmd) {
 }
 
 CommandResult cmd_drop(GameState* game, Command* cmd) {
+    (void)game; // TODO
+    (void)cmd; // TODO
     if (strlen(cmd->noun) == 0) {
         printf("Drop what?\n");
         return RESULT_ERROR;
@@ -79,12 +89,16 @@ CommandResult cmd_drop(GameState* game, Command* cmd) {
 }
 
 CommandResult cmd_inventory(GameState* game, Command* cmd) {
+    (void)game; // TODO
+    (void)cmd; // TODO
     printf("[STUB] Inventory:\n");
     printf("  - Nothing (inventory system not implemented yet)\n");
     return RESULT_OK;
 }
 
 CommandResult cmd_use(GameState* game, Command* cmd) {
+    (void)game; // TODO
+    (void)cmd; // TODO
     if (strlen(cmd->noun) == 0) {
         printf("Use what?\n");
         return RESULT_ERROR;
@@ -94,6 +108,8 @@ CommandResult cmd_use(GameState* game, Command* cmd) {
 }
 
 CommandResult cmd_talk(GameState* game, Command* cmd) {
+    (void)game; // TODO
+    (void)cmd; // TODO
     if (strlen(cmd->noun) == 0) {
         printf("Talk to whom?\n");
         return RESULT_ERROR;
@@ -103,6 +119,8 @@ CommandResult cmd_talk(GameState* game, Command* cmd) {
 }
 
 CommandResult cmd_help(GameState* game, Command* cmd) {
+    (void)game; // TODO
+    (void)cmd; // TODO
     printf("\n=== AVAILABLE COMMANDS ===\n\n");
     printf("Movement:\n");
     printf("  go <direction>, north, south, east, west, n, s, e, w\n\n");
@@ -115,6 +133,8 @@ CommandResult cmd_help(GameState* game, Command* cmd) {
 }
 
 CommandResult cmd_quit(GameState* game, Command* cmd) {
+    (void)game; // TODO
+    (void)cmd; // TODO
     printf("\nAre you sure you want to quit? (y/n): ");
     char response[10];
     if (fgets(response, sizeof(response), stdin)) {

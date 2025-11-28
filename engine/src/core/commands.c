@@ -1,6 +1,9 @@
 #include "commands.h"
+#include "game.h"
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
+
 
 /*
  * Execute a parsed command
@@ -40,14 +43,84 @@ CommandResult execute_command(GameState* game, Command* cmd) {
 }
 
 /*
+ * Helper: Find exit destination from current room
+ * Returns room_id if exit exists, NULL otherwise
+ */
+static const char* find_exit(Room* room, const char* direction) {
+    if (!room || !direction) {
+        return NULL;
+    }
+
+    // Search through exits for atching direction
+    for (int i = 0; i < room->exit_count; i++) {
+        // Parse "direction:room_id" format
+        char exit_copy[128];
+        strncpy(exit_copy, room->exits[i], sizeof(exit_copy) - 1);
+        exit_copy[sizeof(exit_copy) - 1] = '\0';
+
+        char* colon = strchr(exit_copy, ':');
+        if (colon) {
+            *colon = '\0';
+            char* exit_direction = exit_copy; // Split string at colon
+
+            // Compare direction (case-insensitive)
+            if (strcasecmp(exit_direction, direction) == 0) {
+                // Found it! Return the room_id from the original string
+                char* original_colon = strchr(room->exits[i], ':');
+                return original_colon + 1; // Return room_id part
+            }
+        }
+    }
+
+    return NULL; // Exit not found
+}
+
+/*
  * Individual command handlers (STUBS)
  */
 
+
+/* 
+ * GO command - move to another room
+ */ 
 CommandResult cmd_go(GameState* game, Command* cmd) {
-    (void)game; // TODO
-    (void)cmd; // TODO
-    printf("[STUB] You try to go %s.\n", 
-           strlen(cmd->noun) > 0 ? cmd->noun : "somewhere");
+    // Check if direction was provided
+    if (strlen(cmd->noun) == 0) {
+        printf("Go where? (Try: north, south, east, west)\n");
+        return RESULT_ERROR;
+    }
+
+    const char* direction = cmd->noun;
+
+    // Handle abbreviations
+    if (strcmp(direction, "n") == 0) direction = "north";
+    else if (strcmp(direction, "s") == 0) direction = "south";
+    else if (strcmp(direction, "e") == 0) direction = "east";
+    else if (strcmp(direction, "w") == 0) direction = "west";
+
+    // Find the exit
+    const char* destination_id = find_exit(game->current_room, direction);
+
+    if (!destination_id) {
+        printf("You can't go %s from here.\n", direction);
+        return RESULT_ERROR;
+    }
+
+    // Find the destination room
+    Room* destination = find_room_by_id(game->story, destination_id);
+
+    if (!destination) {
+        printf("ERROR: Exit leads to non-existent room '%s'!\n", destination_id);
+        return RESULT_ERROR;
+    }
+
+    // Move to the new room
+    game->current_room = destination;
+    game->turn_count++;
+
+    // Describe the new room;
+    look_at_current_room(game);
+
     return RESULT_OK;
 }
 

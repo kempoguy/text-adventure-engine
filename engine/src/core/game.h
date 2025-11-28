@@ -38,4 +38,7 @@ bool check_victory_condition(GameState* game);
 // Display current room
 void look_at_current_room(GameState* game);
 
+// Find room by ID
+Room* find_room_by_id(Story* story, const char* room_id);
+
 #endif // GAME_H

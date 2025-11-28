@@ -28,17 +28,27 @@ Command parse_command(const char* input) {
         cmd.type = CMD_UNKNOWN;
         return cmd;
     }
-    
+
     // First token is the verb
     strncpy(cmd.verb, token, sizeof(cmd.verb) - 1);
     cmd.type = get_command_type(token);
-    
-    // Second token is the noun (if present)
-    token = strtok(NULL, " ");
-    if (token) {
-        strncpy(cmd.noun, token, sizeof(cmd.noun) - 1);
+
+    // SPECIAL CASE: If the verb itself is a direction, it's actualyl GO + direction
+    if (cmd.type == CMD_GO && 
+        (strcmp(token, "north") == 0 || strcmp(token, "south") == 0 ||
+         strcmp(token, "east")  == 0 || strcmp(token, "west")  == 0 ||
+         strcmp(token, "n") == 0     || strcmp(token, "s") == 0     ||
+         strcmp(token, "e") == 0     || strcmp(token, "w") == 0)) {
+            // The direction IS the verb, put it in the noun
+            strncpy(cmd.noun, token, sizeof(cmd.noun) -1);
+    } else {
+        // Second token is the noun (if present)
+        token = strtok(NULL, " ");
+        if (token) {
+            strncpy(cmd.noun, token, sizeof(cmd.noun) - 1);
+        }
     }
-    
+
     // Third token might be preposition
     token = strtok(NULL, " ");
     if (token) {

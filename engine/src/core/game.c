@@ -3,6 +3,19 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* 
+ * Helper: Find a room by ID
+*/
+Room* find_room_by_id(Story* story, const char* room_id) {
+    for (int i = 0; i < story->room_count; i++) {
+        if (strcmp(story->rooms[i].id, room_id) == 0) {
+            return &story->rooms[i]; // Return pointer to this room
+        }
+    }
+    return NULL; // Not found
+}
+
+
 /*
  * Initialize game state for a story
  */
@@ -15,7 +28,19 @@ GameState* init_game_state(Story* story) {
     }
     
     game->story = story;
-    game->current_room = NULL;  // Will set this when we implement room system
+
+    // Find the starting room
+    game->current_room = find_room_by_id(story, story->metadata.start_room); 
+    if (!game->current_room) {
+        printf("ERROR: Starting room '%s' not found!\n", story->metadata.start_room);
+        free(game);
+        return NULL;
+    }
+
+    printf("[DEBUG] Starting room: %s (%s)\n",
+            game->current_room->id,
+        game->current_room->name);
+
     game->inventory = NULL;
     game->inventory_count = 0;
     game->inventory_weight = 0;
@@ -54,7 +79,6 @@ void free_game_state(GameState* game) {
  * Check if player has won
  */
 bool check_victory_condition(GameState* game) {
-    // Stub: Always return false for now
     return game->game_won;
 }
 
@@ -62,9 +86,46 @@ bool check_victory_condition(GameState* game) {
  * Display current room
  */
 void look_at_current_room(GameState* game) {
-    (void)game; // TODO
-    printf("[STUB] look_at_current_room()\n");
-    printf("\nYou are in a test room.\n");
-    printf("This is where the room description will appear.\n");
-    printf("Exits: north, south, east, west\n");
+    if (!game->current_room) {
+        printf("ERROR: No current room!\n");
+        return;
+    }
+
+    Room* room = game->current_room;
+
+    // Print room name
+    printf("%s\n", room->name);
+
+    // Print room description
+    printf("%s\n", room->description);
+
+    // Print exits
+    if (room->exit_count > 0) {
+        printf("\nExits:");
+        for (int i = 0; i < room->exit_count; i++) {
+            // Parse "direction:room_id" format
+            char exit_copy[128];
+            strncpy(exit_copy, room->exits[i], sizeof(exit_copy) - 1);
+            exit_copy[sizeof(exit_copy) - 1] = '\0';
+
+            char* colon = strchr(exit_copy, ':');
+            if (colon) {
+                *colon = '\0'; // Split at colon
+                char* direction = exit_copy;
+                printf(" %s", direction);
+            }
+        }
+        printf("\n");
+    } else {
+        printf("No obvious exits.\n");
+    }
+
+    // Print items (if any)
+    if (room->item_count > 0) {
+        printf("\n you see:");
+        for (int i = 0; i < room->item_count; i++) {
+            printf(" %s", room->items[i]);
+        }
+        printf("\n");
+    }
 }

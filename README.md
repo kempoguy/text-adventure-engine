@@ -4,7 +4,7 @@ A cross-platform text adventure game engine written in C that loads stories from
 
 ## Current Status
 
-🚧 **In Development** - Phase 1: Foundation
+🚧 **In Development** - Phase 2 Started: Story loader implemented
 
 ## Features (Planned)
 

@@ -1,13 +1,36 @@
-#include "loader.h"
+/*
+ * loader.c - Story loading and parsing
+ *
+ * Loads story files, validates, parses and returns to main game loop.
+ *
+ * Copyright (C) 2025 Marty
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
+#include "loader.h"
 
-/*
- * Helper: Trim whitespace from both ends of a string
-*/
+
+/* Static function declarations */
+static int parse_exits(const char* exit_str, char*** exits_out);
+static int parse_items(const char* item_str, char*** items_out);
+static int parse_keyvalue(char* line, char** key, char** value);
+static char* parse_section(char* line);
+static char* trim(char* str);
+
+
+/**
+ * trim() - Trims leading nad trailing spaces from strings
+ * @str: Pointer to string to be trimmed
+ *
+ * Return: Trimmed string
+ */
+
 static char* trim(char* str) {
     char* end;
 
@@ -28,10 +51,17 @@ static char* trim(char* str) {
     return str;
 }
 
-/*
- * Helper: Check if line is a section header [SECTION]
- */
 
+ /**
+  * parse_section() - Check for section header
+  * @line: Pointer to string containing line to be checked
+  *
+  * Examines string for '[...]' square braces containing content.
+  * Calls trim to remove whitespace
+  *
+  * Return: Trimmed and parsed header string, or NULL if not header
+  */
+ 
 static char* parse_section(char* line) {
     line = trim(line);
 
@@ -47,11 +77,18 @@ static char* parse_section(char* line) {
 
 }
 
-/*
- * Helper: Parse a key=value line
- * Returns 1 if successful, 0 otherwise
- * Modifies key and value pointers to point to the parsed strings
- */
+
+ /**
+  * parse-keyvalue() - Parse a key=value line
+  * @line: Pointer to input string to be parsed
+  * @key: Pointer to key 
+  * @value: Pointer to value
+  *
+  * Modifes key and value pointers to point to the parsed strings
+  *
+  * Return: 1 if successful, 0 otherwise
+  */
+ 
 static int parse_keyvalue(char* line, char** key, char** value) {
     line = trim(line);
 
@@ -74,9 +111,17 @@ static int parse_keyvalue(char* line, char** key, char** value) {
     return 1;
 }
 
-/*
- * Load story metadata from story.ini
-*/
+
+/**
+ * load_story() - Loads story metadata from story.ini
+ * @story_dir: Pointer to string contianing file path to story 
+ *
+ * Opens story, allocates resources, parses line by line, closes file, 
+ * returns current story
+ *
+ * Return: Story structure, NULL on failure
+ */
+
 Story* load_story(const char* story_dir) {
     printf("Loading story from: %s\n", story_dir);
 

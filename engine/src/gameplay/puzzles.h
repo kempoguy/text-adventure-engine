@@ -1,0 +1,9 @@
+/*
+ * puzzles.h - Puzzle system declarations
+ *
+ * STUB: Not implemented yet
+ *
+ * Copyright (C) 2025 Marty
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+

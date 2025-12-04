@@ -1,13 +1,35 @@
-#include "commands.h"
-#include "game.h"
+/*
+ * commands.c - Command execution and handler implementations
+ *
+ * Copyright (C) 2025 Marty
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+
 #include <stdio.h>
 #include <string.h>
 #include <strings.h>
 
+#include "commands.h"
+#include "game.h"
 
-/*
- * Execute a parsed command
- */
+/* Static function declarations */
+static int function_name(void);
+
+static const char* find_exit(Room* room, const char* direction);
+
+
+ /**
+  * execute_command() - Executes parsed command
+  * @game: Pointer to current game state
+  * @cmd: Pointer to parsed command structure
+  *
+  * Dispatches the command to the appropriate handler based on command type. 
+  * Handles both implemented and stub commands.
+  *
+  * Return: CommandResult indicating success, error or quit.
+  */
+ 
 CommandResult execute_command(GameState* game, Command* cmd) {
     switch (cmd->type) {
         case CMD_GO:
@@ -42,10 +64,18 @@ CommandResult execute_command(GameState* game, Command* cmd) {
     }
 }
 
-/*
- * Helper: Find exit destination from current room
- * Returns room_id if exit exists, NULL otherwise
- */
+
+ /**
+  * find_exit() - Find exit destination from current room
+  * @room: Pointer to current room
+  * @direction: Direction string to search for
+  *
+  * Searches the room's exit list for a matching direction (case-insensitive)
+  * and returns the destination room ID.
+  *
+  * Return: Room ID string if exit exists, NULL otherwise
+  */
+ 
 static const char* find_exit(Room* room, const char* direction) {
     if (!room || !direction) {
         return NULL;
@@ -75,14 +105,19 @@ static const char* find_exit(Room* room, const char* direction) {
     return NULL; // Exit not found
 }
 
-/*
- * Individual command handlers (STUBS)
+
+/**
+ * cmd_go() - Handle movement commands
+ * @game: Pointer to current game state
+ * @cmd: Pointer to parsed command
+ *
+ * Processes GO command and direction shortcuts to move the player between
+ * rooms. Handles abbreviations (n/s/e/w), validates exits, and updates game 
+ * state on successful movement.
+ *
+ * Return: RESULT_OK on successful movement, RESULT_ERROR if direction invalid
  */
 
-
-/* 
- * GO command - move to another room
- */ 
 CommandResult cmd_go(GameState* game, Command* cmd) {
     // Check if direction was provided
     if (strlen(cmd->noun) == 0) {
@@ -124,6 +159,17 @@ CommandResult cmd_go(GameState* game, Command* cmd) {
     return RESULT_OK;
 }
 
+
+/**
+ * cmd_look() - Redisplay current room description
+ * @game: Pointer to current game state
+ * @cmd: Pointer to parsed command
+ *
+ * STUB
+ *
+ * Return: CommandResult execution result
+ */
+
 CommandResult cmd_look(GameState* game, Command* cmd) {
     (void)game; // TODO
     (void)cmd; // TODO
@@ -131,13 +177,32 @@ CommandResult cmd_look(GameState* game, Command* cmd) {
     return RESULT_OK;
 }
 
+
+/**
+ * cmd_examine() - Examine an item in detail
+ * @game: Pointer to current game state
+ * @cmd: Pointer to parsed command
+ *
+ * STUB
+ *
+ * Return: CommandResult execution result
+ */
 CommandResult cmd_examine(GameState* game, Command* cmd) {
     (void)game; // TODO
     (void)cmd; // TODO
-    printf("[STUB] You examine the %s.\n", 
-           strlen(cmd->noun) > 0 ? cmd->noun : "area");
     return RESULT_OK;
 }
+
+
+/**
+ * cmd_take() - Pick up an item
+ * @game: Pointer to current game state
+ * @cmd: Pointer to parsed command
+ *
+ * STUB
+ *
+ * Return: CommandResult execution result
+ */
 
 CommandResult cmd_take(GameState* game, Command* cmd) {
     (void)game; // TODO
@@ -146,9 +211,19 @@ CommandResult cmd_take(GameState* game, Command* cmd) {
         printf("Take what?\n");
         return RESULT_ERROR;
     }
-    printf("[STUB] You take the %s.\n", cmd->noun);
     return RESULT_OK;
 }
+
+
+/**
+ * cmd_drop() - Dropan item from inventory
+ * @game: Pointer to current game state
+ * @cmd: Pointer to parsed command
+ *
+ * STUB
+ *
+ * Return: CommandResult execution result
+ */
 
 CommandResult cmd_drop(GameState* game, Command* cmd) {
     (void)game; // TODO
@@ -157,17 +232,38 @@ CommandResult cmd_drop(GameState* game, Command* cmd) {
         printf("Drop what?\n");
         return RESULT_ERROR;
     }
-    printf("[STUB] You drop the %s.\n", cmd->noun);
+
     return RESULT_OK;
 }
+
+
+/**
+ * cmd_inventory() - Display player inventory
+ * @game: Pointer to current game state
+ * @cmd: Pointer to parsed command
+ *
+ * STUB
+ *
+ * Return: CommandResult execution result
+ */
 
 CommandResult cmd_inventory(GameState* game, Command* cmd) {
     (void)game; // TODO
     (void)cmd; // TODO
-    printf("[STUB] Inventory:\n");
-    printf("  - Nothing (inventory system not implemented yet)\n");
+
     return RESULT_OK;
 }
+
+
+/**
+ * cmd_use() - Use an item
+ * @game: Pointer to current game state
+ * @cmd: Pointer to parsed command
+ *
+ * STUB
+ *
+ * Return: CommandResult execution result
+ */
 
 CommandResult cmd_use(GameState* game, Command* cmd) {
     (void)game; // TODO
@@ -176,9 +272,20 @@ CommandResult cmd_use(GameState* game, Command* cmd) {
         printf("Use what?\n");
         return RESULT_ERROR;
     }
-    printf("[STUB] You try to use the %s.\n", cmd->noun);
+
     return RESULT_OK;
 }
+
+
+/**
+ * cmd_talk() - Talk to an NPC
+ * @game: Pointer to current game state
+ * @cmd: Pointer to parsed command
+ *
+ * STUB
+ *
+ * Return: CommandResult execution result
+ */
 
 CommandResult cmd_talk(GameState* game, Command* cmd) {
     (void)game; // TODO
@@ -187,9 +294,20 @@ CommandResult cmd_talk(GameState* game, Command* cmd) {
         printf("Talk to whom?\n");
         return RESULT_ERROR;
     }
-    printf("[STUB] You try to talk to %s.\n", cmd->noun);
+
     return RESULT_OK;
 }
+
+
+/**
+ * cmd_help() - Display available commands
+ * @game: Pointer to current game state
+ * @cmd: Pointer to parsed command
+ *
+ * STUB
+ *
+ * Return: CommandResult execution result
+ */
 
 CommandResult cmd_help(GameState* game, Command* cmd) {
     (void)game; // TODO
@@ -204,6 +322,17 @@ CommandResult cmd_help(GameState* game, Command* cmd) {
     printf("  help, save, load, quit\n\n");
     return RESULT_OK;
 }
+
+
+/**
+ * cmd_quit() - Quit the game with confirmation
+ * @game: Pointer to current game state
+ * @cmd: Pointer to parsed command
+ *
+ * Quits the game after confirming with player. Does not trigger save.
+ *
+ * Return: CommandResult execution result
+ */
 
 CommandResult cmd_quit(GameState* game, Command* cmd) {
     (void)game; // TODO

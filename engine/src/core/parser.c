@@ -1,12 +1,30 @@
-#include "parser.h"
+/*
+ * parser.c - Command parsing and tokenisation implementation
+ *
+ * Copyright (C) 2025 Marty
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
-/*
- * Parse player input into a Command structure
- */
+#include "parser.h"
+
+
+ /**
+ * parse_command() - Parse player input into command structure
+ * @input: Raw player input string
+ *
+ * Tokenizes the input string into verb, noun, preposition, and noun2
+ * components. Converts to lowercase and identifies command type.
+ * Handles direction shortcuts as special case.
+ *
+ * Return: Populated Command structure with parsed components
+  */
+ 
 Command parse_command(const char* input) {
     Command cmd;
     memset(&cmd, 0, sizeof(Command));
@@ -33,7 +51,7 @@ Command parse_command(const char* input) {
     strncpy(cmd.verb, token, sizeof(cmd.verb) - 1);
     cmd.type = get_command_type(token);
 
-    // SPECIAL CASE: If the verb itself is a direction, it's actualyl GO + direction
+    // SPECIAL CASE: If the verb itself is a direction, it's actually GO + direction
     if (cmd.type == CMD_GO && 
         (strcmp(token, "north") == 0 || strcmp(token, "south") == 0 ||
          strcmp(token, "east")  == 0 || strcmp(token, "west")  == 0 ||
@@ -64,9 +82,17 @@ Command parse_command(const char* input) {
     return cmd;
 }
 
-/*
- * Get command type from verb string
+
+/**
+ * get_command_type() - Determine command type from verb string
+ * @verb: Verb string (lowercase)
+ *
+ * Maps verb strings and their synonyms to CommandType enum values
+ * using string comparison.
+ *
+ * Return: CommandType enum value, or CMD_UNKNOWN if verb not recognized
  */
+
 CommandType get_command_type(const char* verb) {
     // GO commands
     if (strcmp(verb, "go") == 0 || strcmp(verb, "move") == 0 ||

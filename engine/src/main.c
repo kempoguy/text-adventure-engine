@@ -1,11 +1,14 @@
 /*
- * Text Adventure Engine - Main Entry Point
- * 
+ * main.c - Text Adventure Engine - Main Entry Point
+ *
  * This is the top-level game loop. It handles:
  * - Engine initialization
  * - Story selection
  * - Main game loop
  * - Cleanup
+ *
+ * Copyright (C) 2025 Marty 
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <stdio.h>
@@ -14,23 +17,32 @@
 #include <string.h>
 
 #include "main.h"
+#include "core/commands.h"
 #include "core/game.h"
 #include "core/parser.h"
-#include "core/commands.h"
-#include "ui/display.h"
-#include "ui/colors.h"
-#include "ui/menu.h"
-#include "story/manager.h"
 #include "story/loader.h"
+#include "story/manager.h"
 #include "story/validator.h"
 #include "system/platform.h"
+#include "ui/colors.h"
+#include "ui/display.h"
+#include "ui/menu.h"
 
-/*
- * Main entry point
- */
+
+ /**
+  * main() - Application entry point and main loop
+  * @argc: Argument count passed from startup (unused)
+  * @argv: Vectors to argument strings (unused)
+  *
+  * This function serves as the primary entry point for the application.
+  * It processes command line arguments, initializes the program environment,
+  * and executes the main loop until user quits.
+  * 
+  * Return: 0 on success, Non-zero for errors
+  */
+ 
 int main(int argc, char** argv) {
-    (void)argc; // TODO
-    (void)argv; // TODO
+
     printf("Text Adventure Engine v1.0\n");
     printf("Initializing...\n\n");
     
@@ -85,13 +97,16 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-/*
- * Start a new game
- * - Scan for available stories
- * - Let player select a story
- * - Load and validate story
- * - Start game loop
- */
+
+/**
+  * start_new_game() - Player has selected to begin a new game. 
+  *
+  * Displays a list of available stories, gets player story selection.
+  * Validates story file, initialises game state. Calls game loop.
+  *
+  * Return: void
+  */
+ 
 void start_new_game(void) {
     printf("\n=== New Game ===\n\n");
     
@@ -145,9 +160,16 @@ void start_new_game(void) {
     free(story_list);
 }
 
-/*
- * Load a saved game
- */
+
+ /**
+  * load_saved_game() - Loads a previously saved game
+  * 
+  * Display available saved game files and loads the selected game state.
+  * Currently not implemented
+  *
+  * Return: void
+  */
+ 
 void load_saved_game(void) {
     printf("\n=== Load Game ===\n\n");
     printf("(Load game not yet implemented)\n");
@@ -155,10 +177,17 @@ void load_saved_game(void) {
     getchar();
 }
 
-/*
- * Main game loop
- * This is where the actual game happens
- */
+
+ /**
+  * play_game() - Main game loop
+  * @game: Pointer to current game state
+  *
+  * Displays the story title and starting location, then enters a loop
+  * processing player commands until quit or victory condition is met.
+  *
+  * Return: void
+  */
+ 
 void play_game(GameState* game) {
     printf("\n");
     printf("========================================\n");

@@ -1,11 +1,31 @@
-#include "game.h"
+/*
+ * game.c - Core game state management implementation
+ *
+ * Copyright (C) 2025 Marty
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-/* 
- * Helper: Find a room by ID
-*/
+#include "game.h"
+
+
+
+/**
+ * find_room_by_id() - Find a room by its identifier
+ * @story: Pointer to story data
+ * @room_id: String identifier of room to find
+ *
+ * Searches the story's room array for a matching room ID using string
+ *  comparison.
+ *
+ * Return: Pointer to room if found, NULL otherwise
+ */
+
 Room* find_room_by_id(Story* story, const char* room_id) {
     for (int i = 0; i < story->room_count; i++) {
         if (strcmp(story->rooms[i].id, room_id) == 0) {
@@ -16,11 +36,19 @@ Room* find_room_by_id(Story* story, const char* room_id) {
 }
 
 
-/*
- * Initialize game state for a story
- */
+
+ /**
+  * init_game_state() - Create and Initialise game state for a story
+  * @story: Pointer to a loaded story
+  *
+  * Allocates and initializes a new GameState structure, finds and sets the
+  * starting room from story metadata, and initializes all counters and flags 
+  * to zero.
+  *
+  * Return: Pointer to initialized GameState, or NULL on allocation failure
+  */
+ 
 GameState* init_game_state(Story* story) {
-    printf("[STUB] init_game_state()\n");
     
     GameState* game = malloc(sizeof(GameState));
     if (!game) {
@@ -37,10 +65,6 @@ GameState* init_game_state(Story* story) {
         return NULL;
     }
 
-    printf("[DEBUG] Starting room: %s (%s)\n",
-            game->current_room->id,
-        game->current_room->name);
-
     game->inventory = NULL;
     game->inventory_count = 0;
     game->inventory_weight = 0;
@@ -54,9 +78,17 @@ GameState* init_game_state(Story* story) {
     return game;
 }
 
-/*
- * Free game state
- */
+
+ /**
+  * free_game_state() - Free game state and associated resources
+  * @game: Pointer to game state to free
+  *
+  * Frees inventory array, quest flags array, and the game state structure
+  * itself. Handles NULL pointers safely.
+  *
+  * Return: void
+  */
+ 
 void free_game_state(GameState* game) {
     printf("[STUB] free_game_state()\n");
     
@@ -75,16 +107,31 @@ void free_game_state(GameState* game) {
     }
 }
 
-/*
- * Check if player has won
- */
+
+ /**
+  * check_victory_condition() - Check if player has won the game
+  * @game: Pointer to current game state
+  * @param2: Description of second parameter
+  *
+  * Checks the game_won flag to determine if victory condition has been met.
+  *
+  * Return: True if player has won, false otherwise
+  */
+ 
 bool check_victory_condition(GameState* game) {
     return game->game_won;
 }
 
-/*
- * Display current room
- */
+
+ /**
+  * look_at_current_room() - Display current room description
+  * @game: Pointer to current game state
+  * Prints room name, description, available exits with directions, and visible 
+  * items in the room
+  *
+  * Return: void
+  */
+ 
 void look_at_current_room(GameState* game) {
     if (!game->current_room) {
         printf("ERROR: No current room!\n");

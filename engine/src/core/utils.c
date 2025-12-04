@@ -1,14 +1,29 @@
-#include "utils.h"
+/*
+ * utils.c - String utility function implementations
+ *
+ * Copyright (C) 2025 Marty
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
-/*
- * String utility functions (minimal stubs)
+#include "utils.h"
+
+
+/**
+ * trim_whitespace() - Remove leading and trailing whitespace from string
+ * @str: String to trim (modified in place)
+ *
+ * Modifies the string in place by advancing the start pointer past leading
+ * whitespace and null-terminating after the last non-whitespace character.
+ *
+ * Return: Pointer to trimmed string (same as input)
  */
 
-// Trim whitespace from both ends of string
 char* trim_whitespace(char* str) {
     char* end;
     
@@ -29,14 +44,36 @@ char* trim_whitespace(char* str) {
     return str;
 }
 
-// Convert string to lowercase
+
+/**
+ * str_to_lower() - Convert string to lowercase
+ * @str: String to convert (modified in place)
+ *
+ * Converts all uppercase ASCII characters to lowercase in place.
+ * Non-ASCII characters are unchanged.
+ *
+ * Return: void
+ */
+
 void str_tolower(char* str) {
     for (int i = 0; str[i]; i++) {
         str[i] = tolower(str[i]);
     }
 }
 
+
 // Safe string copy
+/**
+ * safe_strcopy() - Copy string with buffer overflow protection 
+ * @dest: Destination buffer
+ * @src: Size of destination buffer in bytes
+ *
+ * Copies up to dest_size-1 characters from source to destination
+ * and always null-terminates the destination buffer.
+ *
+ * Return: void
+ */
+
 void safe_strcpy(char* dest, const char* src, size_t dest_size) {
     strncpy(dest, src, dest_size - 1);
     dest[dest_size - 1] = '\0';

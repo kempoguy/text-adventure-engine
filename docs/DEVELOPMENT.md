@@ -1,126 +1,78 @@
 # Development Log
 
-## Session 1 - November 21, 2025
+## Session 4 - December 5, 2025
 
 ### Completed
-- ✅ Project structure created (engine, stories, docs, tests)
-- ✅ CMake build system configured
-- ✅ All stub .c/.h files created and compiling
-- ✅ Full command parser implemented
-- ✅ Game loop structure in place
-- ✅ Cross-platform build working (MSYS2 UCRT64)
+- ✅ **Code Remediation - Phase 1 & 2 Complete**
+  - All 10 core files brought into compliance with C_CODING_STANDARD.md v2.0
+  - Zero compiler warnings achieved
+  
+- ✅ **Phase 1: Critical Fixes (3 hours)**
+  - Added file headers (copyright/SPDX) to all files
+  - Added Kernel-doc function documentation (45+ functions)
+  - Documented all structs and enums
+  - Fixed header guard comment style
+  - Fixed include order (system before project, alphabetically)
+  - Declared static functions properly
+  - Removed stub/debug comments
 
-### Locations
-- Project root: `E:\projects\c-learning\text-adventure-engine`
-- Build directory: `E:\projects\c-learning\text-adventure-engine\build`
-- Executable: `build/bin/adventure.exe`
+- ✅ **Phase 2: Major Fixes (1 hour)**
+  - Created constants.h with named buffer size constants
+  - Eliminated all magic numbers (8 replacements)
+  - Fixed remaining compiler warnings (3)
+  - Removed all [STUB] and [DEBUG] printf statements
+  - Fixed typo in parser.c
 
-### Build Commands
-```bash
-# From MSYS2 UCRT64 terminal
-cd /e/projects/c-learning/text-adventure-engine
-mkdir build  # (only first time)
-cd build
-cmake -G "Unix Makefiles" ..
-make
-./bin/adventure.exe
-```
+- ✅ **VSCode Snippets Created**
+  - Global snippets for C coding standard
+  - Snippets: cheader, kdoc, kdocvoid, kdocstruct, kdocenum, hguard, staticdecl
+  - Significantly speeds up documentation workflow
 
-### Known Issues
-1. Compiler warnings for unused parameters
-2. Empty translation unit warnings for unimplemented modules
-3. Story loader is stub only (returns hardcoded test data)
+### Files Remediated (10 total)
+**Headers (5):**
+- main.h, utils.h, commands.h, parser.h, game.h
 
-### Next Session Goals
-1. **Build System Deep Dive** (30-45 min)
-   - Understand CMakeLists.txt
-   - MSYS2/UCRT64 environment explanation
-   - Compiler flags and warnings
-   - How to diagnose build problems
-   
-2. **Fix All Warnings** (15 min)
-   - Unused parameters
-   - Empty translation units
-   - Clean compilation
+**Implementation (5):**
+- main.c, utils.c, parser.c, commands.c, game.c
 
-3. **Story File Loader** (remaining time)
-   - INI file parser
-   - Load test-story
-   - Basic validation
-
-### Files to Review Next Session
-- `engine/src/story/loader.c` - Needs implementation
-- `engine/src/story/validator.c` - Needs real validation
-- `stories/test-story/*.ini` - Test data files
-- `docs/STORY-FORMAT.md` - File format specification
-
-
-## Session 2 - November 24, 2025
-
-### Completed
-- ✅ Build system deep dive completed
-  - Understood CMake configuration vs build steps
-  - Learned compiler flags (-g, -Wall, -Wextra, -pedantic)
-  - Can diagnose build errors independently
-  - Understand two-step process (cmake → make)
-- ✅ Fixed all compiler warnings properly
-  - Unused parameters: `(void)param;` pattern
-  - Empty translation units: dummy typedef pattern
-  - Zero warnings with strict flags
-- ✅ INI file parser implemented
-  - Section headers: `[SECTION]` or `[TYPE:id]`
-  - Key=value pairs with trimming
-  - Comment support (# and ;)
-  - Blank line handling
-- ✅ Story metadata loader working
-  - Loads title, author, version, description
-  - Loads settings (max_inventory_weight, etc.)
-  - Test story metadata parsed correctly
-- ✅ Room loader implemented
-  - Two-pass parsing (count, then load)
-  - Dynamic memory allocation for room array
-  - Exit list parsing (direction:room_id)
-  - Item list parsing (comma-separated)
-  - Test story: 3 rooms loaded successfully
+**New Files (1):**
+- engine/src/core/constants.h
 
 ### Current Status
-- Story data loads from INI files
-- Rooms parsed with exits and items
-- Game still uses stub implementations
-- Need to connect loaded data to game loop
-
-### Next Session Goals
-1. **Connect Story Data to Game** (30-45 min)
-   - Initialize game with loaded starting room
-   - Display real room descriptions
-   - Show real exits (not hardcoded N/S/E/W)
-   
-2. **Implement Real Navigation** (30 min)
-   - GO command uses actual room exits
-   - Navigate between loaded rooms
-   - Handle invalid directions
-   
-3. **Test Full Game Loop** (15 min)
-   - Play through test story
-   - Verify all 3 rooms accessible
-   - Check descriptions show correctly
+- All core files professionally documented
+- Zero compiler warnings
+- Code quality suitable for portfolio
+- Ready to continue development with established standard
 
 ### Key Learnings
-- **Build System**: CMake generates Makefiles, make executes them
-- **Compiler Flags**: -g (debug), -O0 (no opt), -Wall (warnings)
-- **Warning Fixes**: (void)param for unused, typedef for empty files
-- **File Parsing**: Two-pass approach (count first, allocate, then fill)
-- **Memory Management**: malloc/calloc for dynamic arrays, track counts
-- **Always save before make!** (Learned the hard way)
+- **C #define syntax:** No `=` or `;` (e.g., `#define SIZE 256`, not `= 256;`)
+- **Header guards:** Must match exactly (`#ifndef CONSTANTS_H` and `#define CONSTANTS_H`)
+- **Kernel-doc:** Different styles for functions vs structs/enums
+- **VSCode snippets:** Massive productivity boost for repetitive documentation
+- **Incremental approach:** Headers first, then implementation - builds confidence
+
+### Next Session Goals
+1. **Items System Implementation** (following new standard from start)
+   - Create items.ini loader
+   - Item structure and management
+   - TAKE command implementation
+   - DROP command implementation
+   - Inventory weight tracking
+   
+2. **Apply Standard to New Code**
+   - File headers on creation
+   - Function documentation as written
+   - Named constants for any buffer sizes
+   - Zero warnings from first compile
 
 ### Code Statistics
-- Lines of code added: ~400
-- New functions: 6 (trim, parse_section, parse_keyvalue, parse_exits, parse_items, load_rooms)
-- Story files parsed: 2 (story.ini, rooms.ini)
-- Test data: 3 rooms, 2 exits per room avg, 1 item
+- Total functions documented: 45+
+- Total structs/enums documented: 5
+- Lines of documentation added: ~400
+- Build status: Clean (0 warnings)
+- Files compliant: 11/44 (core module complete)
 
-
-## Session 3 - November 22, 2025 (Part 2)
+## Session 3 - November 24, 2025 (Part 2)
 
 ### Completed
 - ✅ **Pointers Deep Dive** (45 min)
@@ -205,5 +157,129 @@ Test story (3 rooms) fully playable:
 - Shared utilities: 2 (find_room_by_id, find_exit)
 - Story files fully utilized: 2/7 (story.ini, rooms.ini)
 - Playable: YES! ✓
+
+
+## Session 2 - November 22, 2025
+
+### Completed
+- ✅ Build system deep dive completed
+  - Understood CMake configuration vs build steps
+  - Learned compiler flags (-g, -Wall, -Wextra, -pedantic)
+  - Can diagnose build errors independently
+  - Understand two-step process (cmake → make)
+- ✅ Fixed all compiler warnings properly
+  - Unused parameters: `(void)param;` pattern
+  - Empty translation units: dummy typedef pattern
+  - Zero warnings with strict flags
+- ✅ INI file parser implemented
+  - Section headers: `[SECTION]` or `[TYPE:id]`
+  - Key=value pairs with trimming
+  - Comment support (# and ;)
+  - Blank line handling
+- ✅ Story metadata loader working
+  - Loads title, author, version, description
+  - Loads settings (max_inventory_weight, etc.)
+  - Test story metadata parsed correctly
+- ✅ Room loader implemented
+  - Two-pass parsing (count, then load)
+  - Dynamic memory allocation for room array
+  - Exit list parsing (direction:room_id)
+  - Item list parsing (comma-separated)
+  - Test story: 3 rooms loaded successfully
+
+### Current Status
+- Story data loads from INI files
+- Rooms parsed with exits and items
+- Game still uses stub implementations
+- Need to connect loaded data to game loop
+
+### Next Session Goals
+1. **Connect Story Data to Game** (30-45 min)
+   - Initialize game with loaded starting room
+   - Display real room descriptions
+   - Show real exits (not hardcoded N/S/E/W)
+   
+2. **Implement Real Navigation** (30 min)
+   - GO command uses actual room exits
+   - Navigate between loaded rooms
+   - Handle invalid directions
+   
+3. **Test Full Game Loop** (15 min)
+   - Play through test story
+   - Verify all 3 rooms accessible
+   - Check descriptions show correctly
+
+### Key Learnings
+- **Build System**: CMake generates Makefiles, make executes them
+- **Compiler Flags**: -g (debug), -O0 (no opt), -Wall (warnings)
+- **Warning Fixes**: (void)param for unused, typedef for empty files
+- **File Parsing**: Two-pass approach (count first, allocate, then fill)
+- **Memory Management**: malloc/calloc for dynamic arrays, track counts
+- **Always save before make!** (Learned the hard way)
+
+### Code Statistics
+- Lines of code added: ~400
+- New functions: 6 (trim, parse_section, parse_keyvalue, parse_exits, parse_items, load_rooms)
+- Story files parsed: 2 (story.ini, rooms.ini)
+- Test data: 3 rooms, 2 exits per room avg, 1 item
+
+
+## Session 1 - November 21, 2025
+
+### Completed
+- ✅ Project structure created (engine, stories, docs, tests)
+- ✅ CMake build system configured
+- ✅ All stub .c/.h files created and compiling
+- ✅ Full command parser implemented
+- ✅ Game loop structure in place
+- ✅ Cross-platform build working (MSYS2 UCRT64)
+
+### Locations
+- Project root: `E:\projects\c-learning\text-adventure-engine`
+- Build directory: `E:\projects\c-learning\text-adventure-engine\build`
+- Executable: `build/bin/adventure.exe`
+
+### Build Commands
+```bash
+# From MSYS2 UCRT64 terminal
+cd /e/projects/c-learning/text-adventure-engine
+mkdir build  # (only first time)
+cd build
+cmake -G "Unix Makefiles" ..
+make
+./bin/adventure.exe
 ```
+
+### Known Issues
+1. Compiler warnings for unused parameters
+2. Empty translation unit warnings for unimplemented modules
+3. Story loader is stub only (returns hardcoded test data)
+
+### Next Session Goals
+1. **Build System Deep Dive** (30-45 min)
+   - Understand CMakeLists.txt
+   - MSYS2/UCRT64 environment explanation
+   - Compiler flags and warnings
+   - How to diagnose build problems
+   
+2. **Fix All Warnings** (15 min)
+   - Unused parameters
+   - Empty translation units
+   - Clean compilation
+
+3. **Story File Loader** (remaining time)
+   - INI file parser
+   - Load test-story
+   - Basic validation
+
+### Files to Review Next Session
+- `engine/src/story/loader.c` - Needs implementation
+- `engine/src/story/validator.c` - Needs real validation
+- `stories/test-story/*.ini` - Test data files
+- `docs/STORY-FORMAT.md` - File format specification
+
+
+
+
+
 

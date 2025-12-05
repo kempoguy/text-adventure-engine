@@ -18,6 +18,7 @@
 
 #include "main.h"
 #include "core/commands.h"
+#include "core/constants.h"
 #include "core/game.h"
 #include "core/parser.h"
 #include "story/loader.h"
@@ -42,6 +43,12 @@
   */
  
 int main(int argc, char** argv) {
+
+    /* Future: command line argument parsing */
+    if (argc > 1) {
+        /* TODO: Handle command line arguments */
+        (void)argv;
+    }
 
     printf("Text Adventure Engine v1.0\n");
     printf("Initializing...\n\n");
@@ -200,7 +207,7 @@ void play_game(GameState* game) {
     
     // Game loop
     bool playing = true;
-    char input[256];
+    char input[PARSER_INPUT_BUFFER_SIZE];
     
     while (playing) {
         // Show prompt

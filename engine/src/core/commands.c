@@ -11,11 +11,10 @@
 #include <strings.h>
 
 #include "commands.h"
+#include "constants.h"
 #include "game.h"
 
 /* Static function declarations */
-static int function_name(void);
-
 static const char* find_exit(Room* room, const char* direction);
 
 
@@ -84,7 +83,7 @@ static const char* find_exit(Room* room, const char* direction) {
     // Search through exits for atching direction
     for (int i = 0; i < room->exit_count; i++) {
         // Parse "direction:room_id" format
-        char exit_copy[128];
+        char exit_copy[PARSER_EXIT_BUFFER_SIZE];
         strncpy(exit_copy, room->exits[i], sizeof(exit_copy) - 1);
         exit_copy[sizeof(exit_copy) - 1] = '\0';
 
@@ -338,7 +337,7 @@ CommandResult cmd_quit(GameState* game, Command* cmd) {
     (void)game; // TODO
     (void)cmd; // TODO
     printf("\nAre you sure you want to quit? (y/n): ");
-    char response[10];
+    char response[PARSER_RESPONSE_BUFFER_SIZE];
     if (fgets(response, sizeof(response), stdin)) {
         if (response[0] == 'y' || response[0] == 'Y') {
             printf("Thanks for playing!\n");

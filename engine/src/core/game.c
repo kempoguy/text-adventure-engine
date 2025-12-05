@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "constants.h"
 #include "game.h"
 
 
@@ -151,7 +152,7 @@ void look_at_current_room(GameState* game) {
         printf("\nExits:");
         for (int i = 0; i < room->exit_count; i++) {
             // Parse "direction:room_id" format
-            char exit_copy[128];
+            char exit_copy[PARSER_EXIT_BUFFER_SIZE];
             strncpy(exit_copy, room->exits[i], sizeof(exit_copy) - 1);
             exit_copy[sizeof(exit_copy) - 1] = '\0';
 

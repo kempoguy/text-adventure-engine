@@ -6,6 +6,8 @@
  */
 
 
+#include "constants.h" 
+
 #ifndef PARSER_H
 #define PARSER_H
 
@@ -57,10 +59,10 @@ typedef enum {
 
 typedef struct {
     CommandType type;      
-    char verb[32];         
-    char noun[64];         
-    char preposition[16];  
-    char noun2[64];        
+    char verb[PARSER_VERB_SIZE];         
+    char noun[PARSER_NOUN_SIZE];         
+    char preposition[PARSER_PREPOSITION_SIZE];  
+    char noun2[PARSER_NOUN_SIZE];        
 } Command;
 
 

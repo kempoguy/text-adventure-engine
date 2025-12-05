@@ -11,6 +11,7 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "constants.h"
 #include "parser.h"
 
 
@@ -30,7 +31,7 @@ Command parse_command(const char* input) {
     memset(&cmd, 0, sizeof(Command));
     
     // Make a copy we can modify
-    char buffer[256];
+    char buffer[PARSER_INPUT_BUFFER_SIZE];
     strncpy(buffer, input, sizeof(buffer) - 1);
     buffer[sizeof(buffer) - 1] = '\0';
     

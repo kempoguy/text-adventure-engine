@@ -20,6 +20,7 @@
 #include "core/commands.h"
 #include "core/constants.h"
 #include "core/game.h"
+#include "core/logger.h"
 #include "core/parser.h"
 #include "story/loader.h"
 #include "story/manager.h"
@@ -28,6 +29,7 @@
 #include "ui/colors.h"
 #include "ui/display.h"
 #include "ui/menu.h"
+#include "ui/splash.h"
 
 
  /**
@@ -44,11 +46,25 @@
  
 int main(int argc, char** argv) {
 
-    /* Future: command line argument parsing */
-    if (argc > 1) {
-        /* TODO: Handle command line arguments */
-        (void)argv;
+    bool debug_mode = false;
+    char logfile[LOG_FILENAME_SIZE];
+
+    /* Parse command line arguments */
+    for (int i = 1; i < argc; i ++) {
+        if (strcmp(argv[i], "-d") == 0 ||
+            strcmp(argv[i], "--debug") == 0) {
+                debug_mode = true; /* Enable logging/debugging to file */
+            }
     }
+
+    if (debug_mode) {
+        generate_log_filename(logfile, sizeof(logfile));
+        log_init(logfile);
+        add_log_entry("Debug mode enabled");
+        add_log_entry("Silly Walk Engine v1.0");
+    }
+
+    splash_show();
 
     printf("Text Adventure Engine v1.0\n");
     printf("Initializing...\n\n");
@@ -101,6 +117,10 @@ int main(int argc, char** argv) {
     platform_cleanup();
     
     printf("Goodbye!\n");
+
+    /* Close log file */
+    log_close();
+    
     return 0;
 }
 

@@ -12,7 +12,9 @@
 #include <string.h>
 
 #include "constants.h"
+#include "core/logger.h"
 #include "game.h"
+#include "world/items.h"
 
 
 
@@ -28,11 +30,17 @@
  */
 
 Room* find_room_by_id(Story* story, const char* room_id) {
+    
+    add_log_entry("Searching for room: %s at %s", room_id, log_timestamp());
+
     for (int i = 0; i < story->room_count; i++) {
         if (strcmp(story->rooms[i].id, room_id) == 0) {
+            add_log_entry("Found room: %s at %s", room_id, log_timestamp());
             return &story->rooms[i]; // Return pointer to this room
         }
     }
+    
+    add_log_entry("Room not found: %s at %s", room_id, log_timestamp());
     return NULL; // Not found
 }
 
@@ -50,9 +58,14 @@ Room* find_room_by_id(Story* story, const char* room_id) {
   */
  
 GameState* init_game_state(Story* story) {
+    GameState* game; 
     
-    GameState* game = malloc(sizeof(GameState));
+    log_function_entry(__func__, "story=%s", story->metadata.title);
+
+    game = malloc(sizeof(GameState));
     if (!game) {
+        log_function_error(__func__, "Failed to allcoate GameState");
+        log_function_exit(__func__, 0);
         return NULL;
     }
     
@@ -63,6 +76,8 @@ GameState* init_game_state(Story* story) {
     if (!game->current_room) {
         printf("ERROR: Starting room '%s' not found!\n", story->metadata.start_room);
         free(game);
+        log_function_error(__func__, "ERROR: Starting room not found!");
+        log_function_exit(__func__, 0);
         return NULL;
     }
 
@@ -76,6 +91,13 @@ GameState* init_game_state(Story* story) {
     game->score = 0;
     game->game_won = false;
     
+    add_log_entry("Game initialized: room=%s, inventory_slots=%d at %s",
+                  game->current_room->id, 
+                  0,  /* inventory starts empty */
+                  log_timestamp());
+    
+    log_function_exit(__func__, 1);    
+
     return game;
 }
 
@@ -134,8 +156,15 @@ bool check_victory_condition(GameState* game) {
   */
  
 void look_at_current_room(GameState* game) {
+    
+    add_log_entry("Player looking at room: %s at %s", 
+                  game->current_room->id, 
+                  log_timestamp());
+
     if (!game->current_room) {
         printf("ERROR: No current room!\n");
+        log_function_error(__func__, "ERROR: No current room!");
+        log_function_exit(__func__, 0);
         return;
     }
 
@@ -170,10 +199,20 @@ void look_at_current_room(GameState* game) {
 
     // Print items (if any)
     if (room->item_count > 0) {
-        printf("\n you see:");
+        printf("\nYou see:");
         for (int i = 0; i < room->item_count; i++) {
-            printf(" %s", room->items[i]);
+            /* Find the item by ID */
+            Item *item = find_item_by_id(game->story->items,
+                                         game->story->item_count,
+                                         room->items[i]);
+            if (item) {
+                printf(" %s", item->name);
+            } else {
+                printf(" [unknown item: %s]", room->items[i]);
+            }
         }
         printf("\n");
     }
+
+    log_function_exit(__func__, 0);
 }

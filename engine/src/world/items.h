@@ -9,30 +9,10 @@
 #define WORLD_ITEMS_H
 
 #include <stdbool.h>
-#include "../core/constants.h"
+#include "core/constants.h"
+#include "story/story.h"
 
-/**
- * struct Item - Game item representation
- * @id: Unique item identifier
- * @name: Display name of item
- * @description: Detailed description shown on examination
- * @weight: Weight in arbitrary units for inventory management
- * @takeable: True if player can pick up this item
- * @useable: True if player can use this item (future functionality)
- *
- * Represents an item in the game world that can be taken, dropped
- * or used by the player
- */
 
- typedef struct  {
-    char id[ITEM_ID_SIZE];
-    char name[ITEM_NAME_SIZE];
-    char description[ITEM_DESCRIPTION_SIZE];
-    int weight;
-    bool takeable;
-    bool usable;
- } Item;
- 
 
  /**
   * load_items() - Load items from items.ini file
@@ -46,7 +26,7 @@
   * Return: 0 on success, negative errno on failure
   */
 
-  int load_items(const char *filename, Item **items, int *count);
+  int load_items(const char *story_dir, Item **items_out);
 
 
   /**

@@ -42,7 +42,8 @@ typedef struct Item {
     char description[256];
     int weight;
     bool takeable;
-    bool quest_item;
+    bool useable;
+    // bool quest_item;
 } Item;
 
 /*

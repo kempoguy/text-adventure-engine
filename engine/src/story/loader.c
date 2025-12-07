@@ -17,6 +17,7 @@
 #include "ini_parser.h"
 #include "loader.h"
 #include "core/logger.h"
+#include "world/items.h"
 
 
 /* Static function declarations */
@@ -214,10 +215,17 @@ Story* load_story(const char* story_dir) {
                 else if (strcmp(key, "start_room") == 0) {
                     strncpy(story->metadata.start_room, value, sizeof(story->metadata.start_room) -1);
                 }
-                else if (strcmp(key, "max_inventory_weight") == 0) {
+            }
+            /* if we're in the SETTINGS section */
+            else if (strcmp(current_section, "SETTINGS") == 0) {
+                if (strcmp(key, "max_inventory_weight") == 0) {
                     story->metadata.max_inventory_weight = atoi(value);
+                    add_log_entry("Set max_inventory_weight=%d at %s", 
+                     story->metadata.max_inventory_weight, 
+                     log_timestamp());
                 }
             }
+
         }
     }
     add_log_entry("Closing story file at %s", log_timestamp());
@@ -229,13 +237,23 @@ Story* load_story(const char* story_dir) {
     printf("  Start Room: %s\n", story->metadata.start_room);
     add_log_entry("Story metadata at %s: Title: %s, Author: %s, Version: %s, Start Room: %s", log_timestamp(), story->metadata.title, story->metadata.author, story->metadata.version, story->metadata.start_room);
 
-    // Load rooms
+    /* Load rooms */
     story->room_count = load_rooms(story_dir, &story->rooms);
     if (story->room_count == 0) {
         printf("WARNING: No rooms loaded!\n");
         log_function_error(__func__, "WARNING: No rooms loaded from story");
     }
     
+    /* Load items */
+    story->item_count = load_items(story_dir, &story->items);
+    if (story->item_count == 0) {
+        printf("WARNING: No items loaded!\n");
+        log_function_error(__func__, "WARNING: No items loaded from story");
+    } else {
+        add_log_entry("Loaded %d items at %s", story->item_count, log_timestamp());
+    }
+
+    log_function_exit(__func__, 1);
     return story;
 }
 

@@ -12,24 +12,11 @@
 #include "splash.h"
 #include "ui/colors.h"
 
-/* ANSI color codes 
-#define COLOR_RESET      "\033[0m"
-#define COLOR_CYAN       "\033[36m"
-#define COLOR_BRIGHT_CYAN "\033[96m"
-#define COLOR_YELLOW     "\033[33m"
-#define COLOR_WHITE      "\033[37m"
-#define COLOR_GRAY       "\033[90m"
-#define COLOR_GREEN      "\033[92m"
-
-/* Clear screen ANSI code 
-#define COLOR_CLEAR      "\033[2J\033[H"
-*/ 
 
 /*
- * Splash screen ASCII art - stored as a single string
- * Colors embedded using ANSI codes
- * Uses pure ASCII characters for maximum compatibility
- */
+ * Define splash-screen ASCII art char array
+*/
+
 static const char *splash_art = 
 COLOR_CLEAR
 "+------------------------------------------------------------------------------+\n"

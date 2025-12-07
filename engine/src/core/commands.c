@@ -7,12 +7,15 @@
 
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <strings.h>
 
 #include "commands.h"
 #include "constants.h"
+#include "core/logger.h"
 #include "game.h"
+#include "world/items.h"
 
 /* Static function declarations */
 static const char* find_exit(Room* room, const char* direction);
@@ -204,13 +207,77 @@ CommandResult cmd_examine(GameState* game, Command* cmd) {
  */
 
 CommandResult cmd_take(GameState* game, Command* cmd) {
-    (void)game; // TODO
-    (void)cmd; // TODO
+    Item *item;
+    Room *room;
+    int i;
+
+    log_function_entry(__func__, "noun=%s, room=%s", 
+                      cmd->noun, game->current_room->id);
+
     if (strlen(cmd->noun) == 0) {
         printf("Take what?\n");
         return RESULT_ERROR;
     }
-    return RESULT_OK;
+
+    room = game->current_room;
+
+    /* Search for item in current room by name or ID */
+    for (i = 0; i < room->item_count; i++) {
+        item = find_item_by_id(game->story->items,
+                               game->story->item_count,
+                               room->items[i]);
+        
+        if (!item)
+            continue;
+
+        /* Match by name (case-insensitive) or ID */
+        if (strcasecmp(item->name, cmd->noun) == 0 ||
+            strcasecmp(item->id, cmd->noun) == 0) {
+            
+            /* Check if item is takeable */
+            if (!item->takeable) {
+                printf("You can't take the %s.\n", item->name);
+                add_log_entry("Player attempted to take non-takeable item: %s at %s", item->name, log_timestamp());
+                log_function_exit(__func__, RESULT_ERROR);
+                return RESULT_ERROR;
+            }
+
+            /* Check inventory weight limit */
+            if (game->inventory_weight + item->weight > 
+                game->story->metadata.max_inventory_weight) {
+                printf("The %s is too heavy. You're carrying too much.\n", 
+                       item->name);
+                add_log_entry("Player inventory full: tried %s at %s",
+                item->name, log_timestamp());
+                log_function_exit(__func__, RESULT_ERROR);
+                return RESULT_ERROR;
+            }
+
+            /* Add to inventory */
+            game->inventory = realloc(game->inventory, 
+                                     (game->inventory_count + 1) * sizeof(Item*));
+            game->inventory[game->inventory_count] = item;
+            game->inventory_count++;
+            game->inventory_weight += item->weight;
+
+            /* Remove from room */
+            for (int j = i; j < room->item_count - 1; j++) {
+                room->items[j] = room->items[j + 1];
+            }
+            room->item_count--;
+
+            printf("You take the %s.\n", item->name);
+            add_log_entry("Player took item: %s (weight=%d, total_weight=%d) at %s", item->name, item->weight, game->inventory_weight,      log_timestamp());
+            log_function_exit(__func__, RESULT_OK);
+            return RESULT_OK;
+        }
+    }
+
+    printf("You don't see any '%s' here.\n", cmd->noun);
+    add_log_entry("Player tried to take non-existent item: %s at %s",
+                 cmd->noun, log_timestamp());
+    log_function_exit(__func__, RESULT_ERROR);
+    return RESULT_ERROR;
 }
 
 
@@ -225,14 +292,57 @@ CommandResult cmd_take(GameState* game, Command* cmd) {
  */
 
 CommandResult cmd_drop(GameState* game, Command* cmd) {
-    (void)game; // TODO
-    (void)cmd; // TODO
+    Item *item;
+    Room *room;
+    int i;
+
+    log_function_entry(__func__, "noun=%s, room=%s", 
+                      cmd->noun, game->current_room->id);
+
     if (strlen(cmd->noun) == 0) {
         printf("Drop what?\n");
+        log_function_exit(__func__, RESULT_ERROR);
         return RESULT_ERROR;
     }
 
-    return RESULT_OK;
+    /* Search inventory for item */
+    for (i = 0; i < game->inventory_count; i++) {
+        item = game->inventory[i];
+
+        /* Match by name or ID */
+        if (strcasecmp(item->name, cmd->noun) == 0 ||
+            strcasecmp(item->id, cmd->noun) == 0) {
+
+            room = game->current_room;
+
+            /* Add item ID to room */
+            /* Note: room->items is char** (array of item IDs) */
+            room->items = realloc(room->items, 
+                                 (room->item_count + 1) * sizeof(char*));
+            room->items[room->item_count] = item->id;
+            room->item_count++;
+
+            /* Remove from inventory */
+            game->inventory_weight -= item->weight;
+            for (int j = i; j < game->inventory_count - 1; j++) {
+                game->inventory[j] = game->inventory[j + 1];
+            }
+            game->inventory_count--;
+
+            printf("You drop the %s.\n", item->name);
+            add_log_entry("Player dropped item: %s (weight=%d, total_weight=%d) at %s",
+                         item->name, item->weight, game->inventory_weight,
+                         log_timestamp());
+            log_function_exit(__func__, RESULT_OK);
+            return RESULT_OK;
+        }
+    }
+
+    printf("You're not carrying any '%s'.\n", cmd->noun);
+    add_log_entry("Player tried to drop item not in inventory: %s at %s",
+                 cmd->noun, log_timestamp());
+    log_function_exit(__func__, RESULT_ERROR);
+    return RESULT_ERROR;
 }
 
 
@@ -247,9 +357,29 @@ CommandResult cmd_drop(GameState* game, Command* cmd) {
  */
 
 CommandResult cmd_inventory(GameState* game, Command* cmd) {
-    (void)game; // TODO
-    (void)cmd; // TODO
+    (void)cmd;
 
+    log_function_entry(__func__, "count=%d, weight=%d/%d",
+                      game->inventory_count,
+                      game->inventory_weight,
+                      game->story->metadata.max_inventory_weight);
+
+    printf("\n=== INVENTORY ===\n");
+
+    if (game->inventory_count == 0) {
+        printf("You are not carrying anything.\n");
+    } else {
+        printf("You are carrying:\n");
+        for (int i = 0; i < game->inventory_count; i++) {
+            Item *item = game->inventory[i];
+            printf("  - %s (%d kg)\n", item->name, item->weight);
+        }
+        printf("\nTotal weight: %d / %d kg\n", 
+               game->inventory_weight,
+               game->story->metadata.max_inventory_weight);
+    }
+
+    log_function_exit(__func__, RESULT_OK);
     return RESULT_OK;
 }
 

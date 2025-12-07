@@ -7,6 +7,8 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
+#include <sys/time.h>
 #include <time.h>
 
 #include "core/constants.h"
@@ -85,12 +87,29 @@ void add_log_entry(const char *fmt, ...)
 const char *log_timestamp(void)
 {
 	static char buf[LOG_TIMESTAMP_SIZE];
+	struct timeval tv;
 	time_t now;
 	struct tm *t;
+	int len;
 
-	now = time(NULL);
+	gettimeofday(&tv, NULL);
+	now = tv.tv_sec;
 	t = localtime(&now);
-	strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", t);
+
+	if (!t) {
+		strcpy(buf, "localtime-failed");
+		return buf;
+	}
+
+	/* Format: YYYY-MM-DD HH:MM:SS.mmm */
+	len = strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", t);
+
+	if (len == 0) {
+		sprintf(buf, "strftime-failed");
+		return buf;
+	}
+
+	sprintf(buf + len, ".%03ld", tv.tv_usec / 1000);
 
 	return buf;
 }

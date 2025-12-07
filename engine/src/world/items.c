@@ -10,6 +10,7 @@
  #include <stdlib.h>
  #include <string.h>
 
+ #include "core/logger.h"
  #include "items.h"
  #include "story/ini_parser.h"
 
@@ -53,37 +54,51 @@
    * Return: Description of return value and error codes
    */
   
-   int load_items(const char *filename, Item **items, int *count)
+   int load_items(const char *story_dir, Item **items_out)
    {
     FILE *f;
+    char filepath[INI_VALUE_SIZE];
     char line[INI_LINE_BUFFER_SIZE];
     int item_count = 0;
     int current_item = -1;
     Item *item_array = NULL;
 
-    if (!filename || !items || !count)
-        return -EINVAL;
+    log_function_entry(__func__, "story_dir=%s", story_dir);
+
+    if (!story_dir || !items_out) {
+        log_function_error(__func__, "ERROR: Invalid story directory or items");
+        log_function_exit(__func__, 0);
+        return 0;
+    }
+
+    snprintf(filepath, sizeof(filepath), "%s/items.ini", story_dir);
+    add_log_entry("Opening items file: %s at %s", filepath, log_timestamp());
 
     /* Open file */
-    f = fopen(filename, "r");
-    if (!f)
+    f = fopen(filepath, "r");
+    if (!f) {
+        printf("WARNING: Cannot open %s\n", filepath);
+        log_function_error(__func__, "Failed to open items.ini");
+        log_function_exit(__func__, 0);
         return EIO;
-    
+    }
     /* Pass 1: Count items */
     while (fgets(line, sizeof(line), f)) {
         char section[INI_SECTION_SIZE];
 
         if (parse_ini_section(line, section, sizeof(section))) {
+            add_log_entry("Found section: '%s' at %s", section, log_timestamp());
             /* Check if it's an ITEM section*/
-            if (strcmp(section, "ITEM:" + 5) == 0)
+            if (strncmp(section, "ITEM:", 5) == 0)
                 item_count++;
         } 
     }
-
+    add_log_entry("Pass 1 complete: found %d items at %s", item_count,          log_timestamp());
     if (item_count == 0) {
         fclose(f);
-        *items = NULL;
-        *count = 0;
+        *items_out = NULL;
+        log_function_error(__func__, "No items found in items.ini");
+        log_function_exit(__func__, 0);
         return 0; /* No items is not an error */
     }
 
@@ -91,7 +106,9 @@
     item_array = calloc(item_count, sizeof(Item));
     if (!item_array) {
         fclose(f);
-        return -ENOMEM;
+        log_function_error(__func__, "Failed to allocate memory");
+        log_function_exit(__func__, 0);
+        return 0;
     }
 
 
@@ -115,7 +132,7 @@
                 /* Set defaults */
                 item_array[current_item].weight = 0;
                 item_array[current_item].takeable = false;
-                item_array[current_item].usable = false;
+                item_array[current_item].useable = false;
             }
             continue;
         }
@@ -136,17 +153,18 @@
                 item->weight = atoi(value);
             } else if (strcmp(key, "takeable") == 0) {
                 item->takeable = (strcmp(value, "true") == 0);
-            } else if (strcmp(key, "usable") == 0) {
-                item->usable = (strcmp(value, "true") == 0);
+            } else if (strcmp(key, "useable") == 0) {
+                item->useable = (strcmp(value, "true") == 0);
             }
         }   
    }
 
    fclose(f);
 
-   *items = item_array;
-   *count = item_count;
-   return 0;
+   *items_out = item_array;
+   add_log_entry("Loaded %d items at %s", item_count, log_timestamp());
+   log_function_exit(__func__, item_count);
+   return item_count;
 }
 
 

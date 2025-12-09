@@ -14,9 +14,11 @@
 #include "commands.h"
 #include "constants.h"
 #include "core/logger.h"
-#include "game.h"
 #include "core/utils.h"
+#include "game.h"
+#include "system/save.h"
 #include "world/items.h"
+
 
 /* Static function declarations */
 static const char* find_exit(Room* room, const char* direction);
@@ -595,29 +597,36 @@ CommandResult cmd_quit(GameState* game, Command* cmd) {
  * Return: RESULT_OK or RESULT_ERROR
  */
 
- CommandResult cmd_save(GameState* game, Command* cmd) {
-    int slot = 1; /* Default game save slot */
-    
-    log_function_entry(__func__, "noun=%s, room=%s", cmd->noun, game->current_room->id);
+CommandResult cmd_save(GameState* game, Command* cmd) {
+    int slot = 1;  /* Default slot */
+    int result;
+
+    log_function_entry(__func__, "noun=%s, room=%s",
+                      cmd->noun, game->current_room->id);
 
     /* Parse slot number if provided */
     if (strlen(cmd->noun) > 0) {
         slot = atoi(cmd->noun);
-        if (slot <1 || slot > 3) {
-            printf("Save slot must be 1, 2 or 3.\n");
+        if (slot < 1 || slot > 3) {
+            printf("Save slot must be between 1, and %d.\n", SAVE_MAX_SLOTS);
             log_function_exit(__func__, RESULT_ERROR);
             return RESULT_ERROR;
         }
     }
 
     printf("Saving game to slot %d...\n", slot);
-    printf("[SAVE not yet fully implemented - game state not persisted]\n");
+    
+    result = save_game(game, slot);
+    if (result < 0) {
+        printf("Error: Failed to save game.\n");
+        log_function_exit(__func__, RESULT_ERROR);
+        return RESULT_ERROR;
+    }
 
-    add_log_entry("Player saved game to slot %d at %s (placeholder)", slot, log_timestamp());
-
+    printf("Game saved successfully!\n");
     log_function_exit(__func__, RESULT_OK);
     return RESULT_OK;
- }
+}
 
 
  /**
@@ -631,25 +640,42 @@ CommandResult cmd_quit(GameState* game, Command* cmd) {
   */
  
 CommandResult cmd_load(GameState* game, Command* cmd) {
-    int slot = 1; /* Default slot */
+    int slot = 1;  /* Default slot */
+    int result;
 
     log_function_entry(__func__, "noun=%s", cmd->noun);
 
-    /* Parse slot number of provided */
+    /* Parse slot number if provided */
     if (strlen(cmd->noun) > 0) {
         slot = atoi(cmd->noun);
         if (slot < 1 || slot > 3) {
-            printf("Load slot must be 1, 2 or 3.\n");
+            printf("Load slot must be between 1 and %d.\n", SAVE_MAX_SLOTS);
             log_function_exit(__func__, RESULT_ERROR);
             return RESULT_ERROR;
         }
     }
 
+    /* Check if save exists */
+    if (!save_exists(slot)) {
+        printf("No saved game in slot %d.\n", slot);
+        log_function_exit(__func__, RESULT_ERROR);
+        return RESULT_ERROR;
+    }
+
     printf("Loading game from slot %d...\n", slot);
-    printf("[LOAD not yet fully implemented - no save game to restore]\n");
+    
+    result = load_game(game, slot);
+    if (result < 0) {
+        printf("Error: Failed to load game.\n");
+        log_function_exit(__func__, RESULT_ERROR);
+        return RESULT_ERROR;
+    }
 
-    add_log_entry(__func__, "Player tried to load game from slot %d at %s (placeholder)", slot, log_timestamp());
-
+    printf("Game loaded successfully!\n");
+    
+    /* Show current room after loading */
+    look_at_current_room(game);
+    
     log_function_exit(__func__, RESULT_OK);
     return RESULT_OK;
 }

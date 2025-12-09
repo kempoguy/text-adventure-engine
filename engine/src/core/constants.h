@@ -47,5 +47,11 @@
 
 #define STRING_MATCH_BUFFER_SIZE      256 /* String match buffer size */
 
+/* Load/Save funcitons */
+
+#define SAVE_MAX_SLOTS                 3   /* Number of save slots */
+#define SAVE_DIRECTORY                 "saves"
+#define SAVE_FILENAME_FORMAT           "saves/save_slot_%d.sav"
+
 #endif /* CONSTANTS_H */
 

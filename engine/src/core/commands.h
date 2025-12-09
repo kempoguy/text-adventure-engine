@@ -154,4 +154,31 @@ CommandResult cmd_help(GameState* game, Command* cmd);
 
 CommandResult cmd_quit(GameState* game, Command* cmd);
 
+
+/**
+ * cmd_save() - Saves a game in progress 
+ * @game: State of current game
+ * @cmd: Parsed command
+ *
+ * Save current into 1 of 3 save slots. 
+ *
+ * Return: RESULT_OK or RESULT_ERROR
+ */
+
+ CommandResult cmd_save(GameState* game, Command* cmd);
+
+ 
+ /**
+  * cmd_load() - Load game from slot
+  * @game: State of game
+  * @cmd: Parsed command
+  *
+  * Loads game from 1 of 3 slots, overwrites game in progress.
+  *
+  * Return: RESULT_OK or RESULT_ERROR
+  */
+ 
+CommandResult cmd_load(GameState* game, Command* cmd);
+
+
 #endif /* COMMANDS_H */

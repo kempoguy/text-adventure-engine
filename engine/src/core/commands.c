@@ -15,6 +15,7 @@
 #include "constants.h"
 #include "core/logger.h"
 #include "game.h"
+#include "core/utils.h"
 #include "world/items.h"
 
 /* Static function declarations */
@@ -55,11 +56,9 @@ CommandResult execute_command(GameState* game, Command* cmd) {
         case CMD_QUIT:
             return cmd_quit(game, cmd);
         case CMD_SAVE:
-            printf("Save not yet implemented.\n");
-            return RESULT_OK;
+            return cmd_save(game, cmd);
         case CMD_LOAD:
-            printf("Load not yet implemented.\n");
-            return RESULT_OK;
+            return cmd_load(game, cmd);
         default:
             printf("I don't understand '%s'.\n", cmd->verb);
             return RESULT_INVALID;
@@ -190,9 +189,71 @@ CommandResult cmd_look(GameState* game, Command* cmd) {
  * Return: CommandResult execution result
  */
 CommandResult cmd_examine(GameState* game, Command* cmd) {
-    (void)game; // TODO
-    (void)cmd; // TODO
-    return RESULT_OK;
+    Item *item;
+    Room *room;
+    int i;
+
+    log_function_entry(__func__, "noun=%s, room=%s", cmd->noun, game->current_room->id);
+
+    if (strlen(cmd->noun) == 0) {
+        printf("Examine what?\n");
+        log_function_exit(__func__, RESULT_ERROR);
+        return RESULT_ERROR;
+    }
+
+    room = game->current_room;
+
+    /* First check inventory */
+    for (i = 0; i < game->inventory_count; i++) {
+        item = game->inventory[i];
+
+        if (strcasecmp(item->name, cmd->noun) == 0 ||
+            strcasecmp(item->id, cmd->noun) == 0 ||
+            contains_ignore_case(item->name, cmd->noun)) {
+                printf("\n%s\n", item->description);
+                printf("Weight: %d kg\n", item->weight);
+                if (item->useable) {
+                    printf("You can use this item.\n");
+                }
+
+                add_log_entry("Player examined inveotory item: %s at %s", 
+                                item->name, log_timestamp());
+                log_function_exit(__func__, RESULT_OK);
+                return RESULT_OK;
+                
+            }
+    }
+
+    /* Then check room */
+    for (i = 0; i < room->item_count; i++) {
+        item = find_item_by_id(game->story->items,
+                               game->story->item_count,
+                               room->items[i]);
+        
+        if (!item)
+            continue;
+
+        if (strcasecmp(item->name, cmd->noun) == 0 ||
+            strcasecmp(item->id, cmd->noun) == 0 ||
+            contains_ignore_case(item->name, cmd->noun)) {
+                printf("\n%s\n", item->description);
+                printf("Weight: %d kg\n", item->weight);
+                if (item->takeable) {
+                    printf("You could take this.\n");
+                } else {
+                    printf("You can't take this.\n");
+                }
+                add_log_entry(__func__,"Player examined room item: %s at %s",
+                              item->name, log_timestamp());
+                log_function_exit(__func__, RESULT_OK);
+                return RESULT_OK;
+            }
+    }
+
+    printf("You dont see any %s here.\n", cmd->noun);
+    add_log_entry("Player tried to examine non-existent item %s at %s", cmd->noun, log_timestamp());
+    log_function_exit(__func__, RESULT_ERROR);
+    return RESULT_ERROR;
 }
 
 
@@ -395,14 +456,59 @@ CommandResult cmd_inventory(GameState* game, Command* cmd) {
  */
 
 CommandResult cmd_use(GameState* game, Command* cmd) {
-    (void)game; // TODO
-    (void)cmd; // TODO
+    Item *item;
+    int i;
+
+    log_function_entry(__func__, "noun=%s, room=%s", cmd->noun,                 game->current_room->id);
+
     if (strlen(cmd->noun) == 0) {
         printf("Use what?\n");
+        log_function_exit(__func__, RESULT_ERROR);
         return RESULT_ERROR;
     }
 
-    return RESULT_OK;
+    /* Search inventory for item */
+    for (i = 0; i < game->inventory_count; i++) {
+        item = game->inventory[i];
+
+        /* Match by name, ID, or substring */
+        if (strcasecmp(item->name, cmd->noun) == 0 ||
+            strcasecmp(item->id, cmd->noun) == 0 ||
+            contains_ignore_case(item->name, cmd->noun)) {
+
+                if (!item->useable) {
+                    printf("You can't use the %s.\n", item->name);
+                    add_log_entry("Player tried to use a non-useable item: %s at %s", item->name, log_timestamp());
+                    log_function_exit(__func__, RESULT_ERROR);
+                    return RESULT_ERROR;
+                }
+            
+            /* Item specific use logic */
+            if (strcmp(item->id, "torch") == 0) {
+                printf("The %s illuminates the area.\n", item->name);
+                add_log_entry("Player used illumination at %s", log_timestamp());
+            } else 
+            
+            if (strcmp(item->id, "key") == 0) {
+                printf("You'll need something to unlock with the %s", item->name);
+                add_log_entry("Player used a key at %s", log_timestamp());
+            } else {
+
+                /* Generic use message */
+                printf("You use the %s. Nothing happens.\n", item->name);
+                add_log_entry("Player used item: %s at %s", item->name, log_timestamp());
+            }
+
+            log_function_exit(__func__, RESULT_OK);
+            return RESULT_OK;
+        }
+    }
+
+    printf("You're not carrying any '%s'.\n", cmd->noun);
+    add_log_entry("Player tried to use item not in inventory: %s at %s", cmd->noun, log_timestamp());
+
+    log_function_exit(__func__, RESULT_ERROR);
+    return RESULT_ERROR;
 }
 
 
@@ -475,5 +581,75 @@ CommandResult cmd_quit(GameState* game, Command* cmd) {
         }
     }
     printf("Continuing game...\n");
+    return RESULT_OK;
+}
+
+
+/**
+ * cmd_save() - Saves a game in progress 
+ * @game: State of current game
+ * @cmd: Parsed command
+ *
+ * Save current into 1 of 3 save slots. 
+ *
+ * Return: RESULT_OK or RESULT_ERROR
+ */
+
+ CommandResult cmd_save(GameState* game, Command* cmd) {
+    int slot = 1; /* Default game save slot */
+    
+    log_function_entry(__func__, "noun=%s, room=%s", cmd->noun, game->current_room->id);
+
+    /* Parse slot number if provided */
+    if (strlen(cmd->noun) > 0) {
+        slot = atoi(cmd->noun);
+        if (slot <1 || slot > 3) {
+            printf("Save slot must be 1, 2 or 3.\n");
+            log_function_exit(__func__, RESULT_ERROR);
+            return RESULT_ERROR;
+        }
+    }
+
+    printf("Saving game to slot %d...\n", slot);
+    printf("[SAVE not yet fully implemented - game state not persisted]\n");
+
+    add_log_entry("Player saved game to slot %d at %s (placeholder)", slot, log_timestamp());
+
+    log_function_exit(__func__, RESULT_OK);
+    return RESULT_OK;
+ }
+
+
+ /**
+  * cmd_load() - Load game from slot
+  * @game: State of game
+  * @cmd: Parsed command
+  *
+  * Loads game from 1 of 3 slots, overwrites game in progress.
+  *
+  * Return: RESULT_OK or RESULT_ERROR
+  */
+ 
+CommandResult cmd_load(GameState* game, Command* cmd) {
+    int slot = 1; /* Default slot */
+
+    log_function_entry(__func__, "noun=%s", cmd->noun);
+
+    /* Parse slot number of provided */
+    if (strlen(cmd->noun) > 0) {
+        slot = atoi(cmd->noun);
+        if (slot < 1 || slot > 3) {
+            printf("Load slot must be 1, 2 or 3.\n");
+            log_function_exit(__func__, RESULT_ERROR);
+            return RESULT_ERROR;
+        }
+    }
+
+    printf("Loading game from slot %d...\n", slot);
+    printf("[LOAD not yet fully implemented - no save game to restore]\n");
+
+    add_log_entry(__func__, "Player tried to load game from slot %d at %s (placeholder)", slot, log_timestamp());
+
+    log_function_exit(__func__, RESULT_OK);
     return RESULT_OK;
 }

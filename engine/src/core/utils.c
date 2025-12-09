@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "constants.h"
 #include "utils.h"
 
 
@@ -78,3 +79,32 @@ void safe_strcpy(char* dest, const char* src, size_t dest_size) {
     strncpy(dest, src, dest_size - 1);
     dest[dest_size - 1] = '\0';
 }
+
+
+
+/**
+ * contains_ignore_case() - Case-insensitive substring search
+ * @haystack: String to search in
+ * @needle: Substring to search for
+ *
+ * Searches for needle in haystack, ignoring case.
+ *
+ * Return: 1 if found, 0 if not found
+ */
+
+ int contains_ignore_case(const char *haystack, const char *needle) {
+    char hay_lower[STRING_MATCH_BUFFER_SIZE];
+    char needle_lower[STRING_MATCH_BUFFER_SIZE];
+    int i;
+
+    /* Convert both to lowercase */
+    for (i = 0; haystack[i] && i < STRING_MATCH_BUFFER_SIZE; i++) 
+        hay_lower[i] = tolower(haystack[i]);
+    hay_lower[i] = '\0';
+
+    for (i = 0; needle[i] && i < STRING_MATCH_BUFFER_SIZE; i++)
+        needle_lower[i] = tolower(needle[i]);
+    needle_lower[i] = '\0';
+
+    return strstr(hay_lower, needle_lower) != NULL;
+ }

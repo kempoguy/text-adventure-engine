@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+
+
 ### Added - 2025-11-21
 - Initial project structure with CMake build system
 - Complete stub implementation of game engine

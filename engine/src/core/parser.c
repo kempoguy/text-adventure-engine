@@ -62,7 +62,7 @@ Command parse_command(const char* input) {
             strncpy(cmd.noun, token, sizeof(cmd.noun) -1);
     } else {
         // Second token is the noun (if present)
-        token = strtok(NULL, " ");
+        token = strtok(NULL, "");
         if (token) {
             strncpy(cmd.noun, token, sizeof(cmd.noun) - 1);
         }

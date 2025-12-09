@@ -35,11 +35,17 @@
 #define INI_KEY_SIZE                  64  /* INI key name */
 #define INI_VALUE_SIZE                256 /* INI value string */
 
+
 /* Logging */
 
 #define LOG_TIMESTAMP_SIZE            32  /* Log timestamp buffer size */
 #define LOG_FILENAME_SIZE             256 /* Log filename buffer */
 #define LOG_MESSAGE_BUFFER_SIZE       512 /* Internal log message formatting */
+
+
+/* String utilities */
+
+#define STRING_MATCH_BUFFER_SIZE      256 /* String match buffer size */
 
 #endif /* CONSTANTS_H */
 

@@ -52,4 +52,18 @@ void str_tolower(char* str);
 
 void safe_strcpy(char* dest, const char* src, size_t dest_size);
 
+
+/**
+ * contains_ignore_case() - Case-insensitive substring search
+ * @haystack: String to search in
+ * @needle: Substring to search for
+ *
+ * Searches for needle in haystack, ignoring case.
+ *
+ * Return: 1 if found, 0 if not found
+ */
+
+ int contains_ignore_case(const char *haystack, const char *needle);
+
+
 #endif /* UTILS_H */

@@ -187,7 +187,11 @@ bool check_victory_condition(GameState* game) {
   */
  
 void look_at_current_room(GameState* game) {
-    
+    Room *room;
+    bool has_light = false;
+    int i;
+
+
     add_log_entry("Player looking at room: %s at %s", 
                   game->current_room->id, 
                   log_timestamp());
@@ -199,13 +203,32 @@ void look_at_current_room(GameState* game) {
         return;
     }
 
-    Room* room = game->current_room;
+    room = game->current_room;
+
+    /* Check if player has a light source in inventory */
+    if (room->dark) {
+        for (i = 0; i < game->inventory_count; i++) {
+            if (game->inventory[i]->illuminates) {
+                has_light = true;
+                break;
+            }
+        }
+    }
 
     /* Print room name */
     printf("%s\n", room->name);
 
     /* Print room description */
     printf("%s\n", room->description);
+
+    /* If dark and no light, hide details */
+    if (room->dark && !has_light) {
+        printf("\nIt's too dark to see anything!\n");
+        add_log_entry("Room is dark, player has no light at %s", log_timestamp());
+        log_function_exit(__func__,0);
+        return;
+    }
+
 
     /* Print exits */
     if (room->exit_count > 0) {
@@ -220,7 +243,13 @@ void look_at_current_room(GameState* game) {
             if (colon) {
                 *colon = '\0'; /* Split at colon */
                 char* direction = exit_copy;
-                printf(" %s", direction);
+                
+                /* Show if exit is locked */
+                if (room->locked && strcmp(direction, room->locked_exit) == 0) {
+                    printf(" %s (locked)", direction);
+                } else {
+                    printf(" %s", direction);
+                }
             }
         }
         printf("\n");

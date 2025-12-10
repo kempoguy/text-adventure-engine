@@ -63,6 +63,7 @@
 #define ROOM_ID_SIZE               64
 #define ROOM_NAME_SIZE             128
 #define ROOM_DESCRIPTION_SIZE      512
+#define ROOM_LOCKED_EXIT_SIZE      64   /* ID of locked exit direction */
 
 #define NPC_ID_SIZE                64
 #define NPC_NAME_SIZE              128

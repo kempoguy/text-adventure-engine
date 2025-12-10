@@ -148,6 +148,13 @@ CommandResult cmd_go(GameState* game, Command* cmd) {
         return RESULT_ERROR;
     }
 
+    /* Check if exit is locked */
+    if (game->current_room->locked && strcmp(direction, game->current_room->locked_exit) == 0) {
+        printf("The %s exit is locked. You need to unlock it first.\n", direction);
+        add_log_entry("Player tried locked exit: %s at %s", direction, log_timestamp());
+        return RESULT_ERROR;
+    }
+
     // Find the destination room
     Room* destination = find_room_by_id(game->story, destination_id);
 
@@ -459,69 +466,103 @@ CommandResult cmd_inventory(GameState* game, Command* cmd) {
 
 
 /**
- * cmd_use() - Use an item
+ * cmd_use() - Use an item with real effects
  * @game: Pointer to current game state
  * @cmd: Pointer to parsed command
  *
- * STUB
+ * Applies item effects:
+ * - Illuminating items: Reveals dark room contents
+ * - Unlocking items: Opens locked exits
  *
- * Return: CommandResult execution result
+ * Return: RESULT_OK on success, RESULT_ERROR on failure
  */
-
 CommandResult cmd_use(GameState* game, Command* cmd) {
-    Item *item;
-    int i;
+	Item *item;
+	int i;
 
-    log_function_entry(__func__, "noun=%s, room=%s", cmd->noun,                 game->current_room->id);
+	log_function_entry(__func__, "noun=%s, room=%s", cmd->noun,
+	                  game->current_room->id);
 
-    if (strlen(cmd->noun) == 0) {
-        printf("Use what?\n");
-        log_function_exit(__func__, RESULT_ERROR);
-        return RESULT_ERROR;
-    }
+	if (strlen(cmd->noun) == 0) {
+		printf("Use what?\n");
+		log_function_exit(__func__, RESULT_ERROR);
+		return RESULT_ERROR;
+	}
 
-    /* Search inventory for item */
-    for (i = 0; i < game->inventory_count; i++) {
-        item = game->inventory[i];
+	/* Search inventory for item */
+	for (i = 0; i < game->inventory_count; i++) {
+		item = game->inventory[i];
 
-        /* Match by name, ID, or substring */
-        if (strcasecmp(item->name, cmd->noun) == 0 ||
-            strcasecmp(item->id, cmd->noun) == 0 ||
-            contains_ignore_case(item->name, cmd->noun)) {
+		/* Match by name, ID, or substring */
+		if (strcasecmp(item->name, cmd->noun) == 0 ||
+		    strcasecmp(item->id, cmd->noun) == 0 ||
+		    contains_ignore_case(item->name, cmd->noun)) {
 
-                if (!item->useable) {
-                    printf("You can't use the %s.\n", item->name);
-                    add_log_entry("Player tried to use a non-useable item: %s at %s", item->name, log_timestamp());
-                    log_function_exit(__func__, RESULT_ERROR);
-                    return RESULT_ERROR;
-                }
-            
-            /* Item specific use logic */
-            if (strcmp(item->id, "torch") == 0) {
-                printf("The %s illuminates the area.\n", item->name);
-                add_log_entry("Player used illumination at %s", log_timestamp());
-            } else 
-            
-            if (strcmp(item->id, "key") == 0) {
-                printf("You'll need something to unlock with the %s", item->name);
-                add_log_entry("Player used a key at %s", log_timestamp());
-            } else {
+			if (!item->useable) {
+				printf("You can't use the %s.\n", item->name);
+				add_log_entry("Player tried to use non-useable item: %s at %s",
+				             item->name, log_timestamp());
+				log_function_exit(__func__, RESULT_ERROR);
+				return RESULT_ERROR;
+			}
 
-                /* Generic use message */
-                printf("You use the %s. Nothing happens.\n", item->name);
-                add_log_entry("Player used item: %s at %s", item->name, log_timestamp());
-            }
+			/* ILLUMINATION EFFECT */
+			if (item->illuminates) {
+				if (game->current_room->dark) {
+					printf("The %s illuminates the area!\n", item->name);
+					printf("\n");
+					look_at_current_room(game);
+					add_log_entry("Player used illumination in dark room at %s",
+					             log_timestamp());
+				} else {
+					printf("The %s provides light, but you can already see clearly.\n",
+					       item->name);
+					add_log_entry("Player used illumination in lit room at %s",
+					             log_timestamp());
+				}
+				log_function_exit(__func__, RESULT_OK);
+				return RESULT_OK;
+			}
 
-            log_function_exit(__func__, RESULT_OK);
-            return RESULT_OK;
-        }
-    }
+			/* UNLOCKING EFFECT */
+			if (item->unlocks) {
+				if (game->current_room->locked) {
+					printf("You use the %s to unlock the %s exit!\n",
+					       item->name, game->current_room->locked_exit);
+					
+					/* Unlock the exit */
+					game->current_room->locked = false;
+					game->current_room->locked_exit[0] = '\0';
+					
+					add_log_entry("Player unlocked exit: %s at %s",
+					             game->current_room->locked_exit,
+					             log_timestamp());
+					log_function_exit(__func__, RESULT_OK);
+					return RESULT_OK;
+				} else {
+					printf("There's nothing to unlock here.\n");
+					add_log_entry("Player tried to unlock in unlocked room at %s",
+					             log_timestamp());
+					log_function_exit(__func__, RESULT_OK);
+					return RESULT_OK;
+				}
+			}
 
-    printf("You're not carrying any '%s'.\n", cmd->noun);
-    add_log_entry("Player tried to use item not in inventory: %s at %s", cmd->noun, log_timestamp());
+			/* Generic useable item (no special effect) */
+			printf("You use the %s. Nothing special happens.\n", item->name);
+			add_log_entry("Player used generic item: %s at %s",
+			             item->name, log_timestamp());
+			log_function_exit(__func__, RESULT_OK);
+			return RESULT_OK;
+		}
+	}
 
-    log_function_exit(__func__, RESULT_ERROR);
-    return RESULT_ERROR;
+	printf("You're not carrying any '%s'.\n", cmd->noun);
+	add_log_entry("Player tried to use item not in inventory: %s at %s",
+	             cmd->noun, log_timestamp());
+
+	log_function_exit(__func__, RESULT_ERROR);
+	return RESULT_ERROR;
 }
 
 

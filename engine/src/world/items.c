@@ -133,6 +133,8 @@
                 item_array[current_item].weight = 0;
                 item_array[current_item].takeable = false;
                 item_array[current_item].useable = false;
+                item_array[current_item].illuminates = false;
+                item_array[current_item].unlocks = false;
             }
             continue;
         }
@@ -155,6 +157,10 @@
                 item->takeable = (strcmp(value, "true") == 0);
             } else if (strcmp(key, "useable") == 0) {
                 item->useable = (strcmp(value, "true") == 0);
+            } else if (strcmp(key, "illuminates") == 0) {
+                item->illuminates = (strcmp(value, "true") == 0);
+            } else if (strcmp(key, "unlocks") == 0) {
+                item->unlocks = (strcmp(value, "true") == 0);
             }
         }   
    }

@@ -441,6 +441,13 @@ int load_rooms(const char *story_dir, Room **rooms_out) {
             } else if (strcmp(key, "npcs") == 0) {
                 room->npc_count = parse_npcs(value, 
                     &room->npcs);
+            } else if (strcmp(key, "dark") == 0) {
+                room->dark = (strcmp(value, "true") == 0);
+            } else if (strcmp(key, "locked") == 0) {
+                room->locked = (strcmp(value, "true") == 0);
+            } else if (strcmp(key, "locked_exit") == 0) {
+                strncpy(room->locked_exit, value,
+                    sizeof(room->locked_exit) - 1);
             }
         }
     }

@@ -51,6 +51,9 @@ typedef struct {
  * @item_count: Number of items in room
  * @npcs: Array of NPC IDs present in room
  * @npc_count: Number of NPCs in room
+ * @dark: Room is dark - needs light
+ * @locked: Room has locked exit
+ * @locked_exit: Which exit is locked (e.g. "north")
  * @visited: Has player been here before
  */
 
@@ -64,6 +67,9 @@ typedef struct Room {
 	int item_count;
 	char** npcs;
 	int npc_count;
+	bool dark;
+	bool locked;
+	char locked_exit[ROOM_LOCKED_EXIT_SIZE];
 	bool visited;
 } Room;
 
@@ -76,6 +82,8 @@ typedef struct Room {
  * @weight: Item weight in kg
  * @takeable: Can item be picked up
  * @useable: Can item be used
+ * @illuminates: Can item light a dark space
+ * @unlocks: Can item unlock locked exits
  */
 
 typedef struct Item {
@@ -85,6 +93,8 @@ typedef struct Item {
 	int weight;
 	bool takeable;
 	bool useable;
+	bool illuminates;
+	bool unlocks;
 } Item;
 
 

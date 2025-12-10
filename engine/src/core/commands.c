@@ -18,7 +18,7 @@
 #include "game.h"
 #include "system/save.h"
 #include "world/items.h"
-
+#include "world/npcs.h"
 
 /* Static function declarations */
 static const char* find_exit(Room* room, const char* direction);
@@ -519,20 +519,71 @@ CommandResult cmd_use(GameState* game, Command* cmd) {
  * @game: Pointer to current game state
  * @cmd: Pointer to parsed command
  *
- * STUB
+ * Finds NPC in current room by name or ID (with fuzzy matching) and displays
+ * their dialog. Dialog cycles through multiple lines on repeated conversations.
  *
- * Return: CommandResult execution result
+ * Return: RESULT_OK if NPC found and talked to, RESULT_ERROR otherwise
  */
 
 CommandResult cmd_talk(GameState* game, Command* cmd) {
-    (void)game; // TODO
-    (void)cmd; // TODO
+    Room *room;
+    NPC *npc;
+    int i;
+
+    log_function_entry(__func__, "noun=%s, room=%s",
+                      cmd->noun, game->current_room->id);
+
     if (strlen(cmd->noun) == 0) {
         printf("Talk to whom?\n");
+        log_function_exit(__func__, RESULT_ERROR);
         return RESULT_ERROR;
     }
 
-    return RESULT_OK;
+    room = game->current_room;
+
+    /* Search for NPC in current room */
+    for (i = 0; i < room->npc_count; i++) {
+        npc = find_npc_by_id(game->story->npcs,
+                            game->story->npc_count,
+                            room->npcs[i]);
+        
+        if (!npc)
+            continue;
+
+        /* Match by name or ID (with fuzzy matching) */
+        if (strcasecmp(npc->name, cmd->noun) == 0 ||
+            strcasecmp(npc->id, cmd->noun) == 0 ||
+            contains_ignore_case(npc->name, cmd->noun)) {
+
+            /* Check if NPC has dialog */
+            if (npc->dialog_count == 0) {
+                printf("%s has nothing to say.\n", npc->name);
+                log_function_exit(__func__, RESULT_OK);
+                return RESULT_OK;
+            }
+
+            /* Display current dialog line */
+            printf("\n%s says:\n\"%s\"\n", 
+                   npc->name, 
+                   npc->dialog[npc->dialog_index]);
+
+            /* Advance to next dialog line (cycle) */
+            npc->dialog_index = (npc->dialog_index + 1) % npc->dialog_count;
+
+            add_log_entry("Player talked to NPC: %s (line %d/%d) at %s",
+                         npc->name, npc->dialog_index, 
+                         npc->dialog_count, log_timestamp());
+
+            log_function_exit(__func__, RESULT_OK);
+            return RESULT_OK;
+        }
+    }
+
+    printf("There's no '%s' here to talk to.\n", cmd->noun);
+    add_log_entry("Player tried to talk to non-existent NPC: %s at %s",
+                 cmd->noun, log_timestamp());
+    log_function_exit(__func__, RESULT_ERROR);
+    return RESULT_ERROR;
 }
 
 

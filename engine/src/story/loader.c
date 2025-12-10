@@ -18,11 +18,13 @@
 #include "loader.h"
 #include "core/logger.h"
 #include "world/items.h"
+#include "world/npcs.h"
 
 
 /* Static function declarations */
 static int parse_exits(const char* exit_str, char*** exits_out);
 static int parse_items(const char *item_str, char ***items_out);
+static int parse_npcs(const char *npc_str, char ***npcs_out);
 
 
 /**
@@ -128,6 +130,58 @@ static int parse_items(const char* item_str, char*** items_out) {
     }
     
     *items_out = items;
+    return i;
+}
+
+
+/**
+ * parse_npcs() - Parse comma-separated NPC list
+ * @npc_str: String containing NPCs (e.g., "wizard,guard,merchant")
+ * @npcs_out: Pointer to store allocated NPC array
+ *
+ * Parses comma-separated list of NPC identifiers.
+ * Caller must free both the strings and the array.
+ *
+ * Return: Number of NPCs parsed, 0 if empty or error
+ */
+static int parse_npcs(const char* npc_str, char*** npcs_out) {
+    
+    char buffer[INI_VALUE_SIZE];
+    char **npcs;
+    char *token;
+    const char *p;
+    int count = 1;
+    int i = 0;
+
+    if (!npc_str || strlen(npc_str) == 0) {
+        *npcs_out = NULL;
+        return 0;
+    }
+    
+    /* Make a copy we can modify */
+    strncpy(buffer, npc_str, sizeof(buffer) - 1);
+    buffer[sizeof(buffer) - 1] = '\0';
+    
+    /* Count commas to determine number of NPCs */
+    for (p = buffer; *p; p++) {
+        if (*p == ',') 
+            count++;
+    }
+    
+    /* Allocate array of string pointers */
+    npcs = malloc(sizeof(char *) * count);
+    if (!npcs) 
+        return 0;
+    
+    /* Parse NPCs */
+    token = strtok(buffer, ",");
+    while (token && i < count) {
+        npcs[i] = strdup(trim_whitespace(token));
+        i++;
+        token = strtok(NULL, ",");
+    }
+    
+    *npcs_out = npcs;
     return i;
 }
 
@@ -253,6 +307,15 @@ Story* load_story(const char* story_dir) {
         add_log_entry("Loaded %d items at %s", story->item_count, log_timestamp());
     }
 
+    /* Load NPCs */
+    story->npc_count = load_npcs(story_dir, &story->npcs);
+    if (story->npc_count == 0) {
+        printf("WARNING: No NPCs loaded!\n");
+        log_function_error(__func__, "WARNING: No NPCs loaded from story");
+    } else {
+        add_log_entry("Loaded %d NPCs at %s", story->npc_count, log_timestamp());
+    }
+
     log_function_exit(__func__, 1);
     return story;
 }
@@ -362,6 +425,9 @@ int load_rooms(const char *story_dir, Room **rooms_out) {
             } else if (strcmp(key, "items") == 0) {
                 room->item_count = parse_items(value, 
                     &room->items);
+            } else if (strcmp(key, "npcs") == 0) {
+                room->npc_count = parse_npcs(value, 
+                    &room->npcs);
             }
         }
     }
@@ -374,6 +440,7 @@ int load_rooms(const char *story_dir, Room **rooms_out) {
         printf("    - %s (%s)\n", rooms[i].id, rooms[i].name);
         printf("      Exits: %d\n", rooms[i].exit_count);
         printf("      Items: %d\n", rooms[i].item_count);
+        printf("      NPCs: %d\n", rooms[i].npc_count);
     }
     
     *rooms_out = rooms;

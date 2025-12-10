@@ -11,10 +11,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ui/colors.h"
 #include "constants.h"
 #include "core/logger.h"
 #include "game.h"
 #include "world/items.h"
+#include "world/npcs.h"
 
 
 
@@ -36,12 +38,12 @@ Room* find_room_by_id(Story* story, const char* room_id) {
     for (int i = 0; i < story->room_count; i++) {
         if (strcmp(story->rooms[i].id, room_id) == 0) {
             add_log_entry("Found room: %s at %s", room_id, log_timestamp());
-            return &story->rooms[i]; // Return pointer to this room
+            return &story->rooms[i]; /* Return pointer to this room */
         }
     }
     
     add_log_entry("Room not found: %s at %s", room_id, log_timestamp());
-    return NULL; // Not found
+    return NULL; /* Not found */
 }
 
 
@@ -71,10 +73,10 @@ GameState* init_game_state(Story* story) {
     
     game->story = story;
 
-    // Find the starting room
+    /* Find the starting room */
     game->current_room = find_room_by_id(story, story->metadata.start_room); 
     if (!game->current_room) {
-        printf("ERROR: Starting room '%s' not found!\n", story->metadata.start_room);
+        printf(COLOR_RED "ERROR: Starting room '%s' not found!\n" COLOR_RESET, story->metadata.start_room);
         free(game);
         log_function_error(__func__, "ERROR: Starting room not found!");
         log_function_exit(__func__, 0);
@@ -170,24 +172,24 @@ void look_at_current_room(GameState* game) {
 
     Room* room = game->current_room;
 
-    // Print room name
+    /* Print room name */
     printf("%s\n", room->name);
 
-    // Print room description
+    /* Print room description */
     printf("%s\n", room->description);
 
-    // Print exits
+    /* Print exits */
     if (room->exit_count > 0) {
         printf("\nExits:");
         for (int i = 0; i < room->exit_count; i++) {
-            // Parse "direction:room_id" format
+            /* Parse "direction:room_id" format */
             char exit_copy[PARSER_EXIT_BUFFER_SIZE];
             strncpy(exit_copy, room->exits[i], sizeof(exit_copy) - 1);
             exit_copy[sizeof(exit_copy) - 1] = '\0';
 
             char* colon = strchr(exit_copy, ':');
             if (colon) {
-                *colon = '\0'; // Split at colon
+                *colon = '\0'; /* Split at colon */
                 char* direction = exit_copy;
                 printf(" %s", direction);
             }
@@ -197,7 +199,7 @@ void look_at_current_room(GameState* game) {
         printf("No obvious exits.\n");
     }
 
-    // Print items (if any)
+    /* Print items (if any) */
     if (room->item_count > 0) {
         printf("\nYou see:");
         for (int i = 0; i < room->item_count; i++) {
@@ -209,6 +211,22 @@ void look_at_current_room(GameState* game) {
                 printf(" %s", item->name);
             } else {
                 printf(" [unknown item: %s]", room->items[i]);
+            }
+        }
+        printf("\n");
+    }
+
+    /* Print NPCs (if any) */
+    if (room->npc_count > 0) {
+        printf("\nPresent:");
+        for (int i = 0; i < room->npc_count; i++) {
+            NPC *npc = find_npc_by_id(game->story->npcs,
+                                      game->story->npc_count,
+                                      room->npcs[i]);
+            if (npc) {
+                printf(" %s", npc->name);
+            } else {
+                printf(" [unknown NPC: %s]", room->npcs[i]);
             }
         }
         printf("\n");

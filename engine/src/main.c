@@ -142,7 +142,7 @@ void start_new_game(void) {
     int story_count = scan_stories(&story_list);
     
     if (story_count == 0) {
-        printf("No stories found in stories/ directory!\n");
+        printf( COLOR_RED "No stories found in stories/ directory!\n" COLOR_RESET );
         printf("Press any key to continue...\n");
         getchar();
         return;
@@ -165,7 +165,7 @@ void start_new_game(void) {
     // Validate story
     printf("\nValidating story...\n");
     if (!validate_story(story)) {
-        printf("Story validation failed! Cannot play this story.\n");
+        printf(COLOR_RED "Story validation failed! Cannot play this story.\n" COLOR_RESET);
         free_story(story);
         free(story_list);
         printf("Press any key to continue...\n");
@@ -173,7 +173,7 @@ void start_new_game(void) {
         return;
     }
     
-    printf("Story validated successfully!\n\n");
+    printf(COLOR_GREEN "Story validated successfully!\n\n" COLOR_RESET);
     
     // Initialize game state
     GameState* game = init_game_state(story);
@@ -198,8 +198,8 @@ void start_new_game(void) {
   */
  
 void load_saved_game(void) {
-    printf("\n=== Load Game ===\n\n");
-    printf("(Load game not yet implemented)\n");
+    printf(COLOR_CYAN "\n===" COLOR_RESET "Load Game" COLOR_CYAN "===\n\n" COLOR_RESET);
+    printf(COLOR_RED "(Load game not yet implemented)\n" COLOR_RESET);
     printf("Press any key to continue...\n");
     getchar();
 }
@@ -260,9 +260,9 @@ void play_game(GameState* game) {
         // Check for victory
         if (check_victory_condition(game)) {
             printf("\n");
-            printf("========================================\n");
-            printf("  VICTORY!\n");
-            printf("========================================\n");
+            printf(COLOR_CYAN "========================================\n" COLOR_RESET);
+            printf(COLOR_GREEN "  VICTORY!\n" COLOR_RESET);
+            printf(COLOR_CYAN "========================================\n" COLOR_RESET);
             printf("\n");
             printf("%s\n", game->story->metadata.victory_text);
             printf("\nPress any key to continue...\n");

@@ -53,5 +53,21 @@
 #define SAVE_DIRECTORY                 "saves"
 #define SAVE_FILENAME_FORMAT           "saves/save_slot_%d.sav"
 
+/* Story data field sizes */
+#define STORY_TITLE_SIZE           128
+#define STORY_AUTHOR_SIZE          64
+#define STORY_VERSION_SIZE         16
+#define STORY_DESCRIPTION_SIZE     512
+#define STORY_DIRECTORY_SIZE       256
+
+#define ROOM_ID_SIZE               64
+#define ROOM_NAME_SIZE             128
+#define ROOM_DESCRIPTION_SIZE      512
+
+#define NPC_ID_SIZE                64
+#define NPC_NAME_SIZE              128
+#define NPC_DESCRIPTION_SIZE       256
+#define NPC_LOCATION_SIZE          64
+
 #endif /* CONSTANTS_H */
 

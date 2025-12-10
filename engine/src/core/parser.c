@@ -142,6 +142,12 @@ CommandType get_command_type(const char* verb) {
     if (strcmp(verb, "talk") == 0 || strcmp(verb, "speak") == 0) {
         return CMD_TALK;
     }
+
+    // QUESTS commands
+    if (strcmp(verb, "quests") == 0 ||strcmp(verb, "quest") == 0 ||
+        strcmp(verb, "objectives") == 0) {
+            return CMD_QUESTS;
+        }
     
     // HELP commands
     if (strcmp(verb, "help") == 0 || strcmp(verb, "?") == 0) {

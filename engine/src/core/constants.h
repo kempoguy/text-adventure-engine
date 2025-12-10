@@ -69,5 +69,11 @@
 #define NPC_DESCRIPTION_SIZE       256
 #define NPC_LOCATION_SIZE          64
 
+/* Quest constants */
+#define QUEST_ID_SIZE              64
+#define QUEST_NAME_SIZE            128
+#define QUEST_DESCRIPTION_SIZE     512
+#define QUEST_COMPLETION_ID_SIZE   64
+
 #endif /* CONSTANTS_H */
 

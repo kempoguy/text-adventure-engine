@@ -15,10 +15,12 @@
 #include "core/constants.h"
 #include "core/utils.h" 
 #include "ini_parser.h"
+#include "gameplay/quests.h"
 #include "loader.h"
 #include "core/logger.h"
 #include "world/items.h"
 #include "world/npcs.h"
+
 
 
 /* Static function declarations */
@@ -316,6 +318,17 @@ Story* load_story(const char* story_dir) {
         add_log_entry("Loaded %d NPCs at %s", story->npc_count, log_timestamp());
     }
 
+    /* Load quests */
+    story->quest_count = load_quests(story_dir, &story->quests);
+    if (story->quest_count == 0) {
+        printf("WARNING: No quests loaded!\n");
+        log_function_error(__func__, "WARNING: No quests loaded from story");
+    } else {
+        add_log_entry("Loaded %d quests at %s", story->quest_count, log_timestamp());
+    }
+
+
+
     log_function_exit(__func__, 1);
     return story;
 }
@@ -473,6 +486,11 @@ void free_story(Story* story) {
         if (story->npcs) {
             // TODO: Free individual NPC data
             free(story->npcs);
+        }
+
+        /* Free quests */
+        if (story->quests) {
+            free(story->quests);
         }
         
         free(story);

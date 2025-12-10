@@ -134,6 +134,17 @@ CommandResult cmd_talk(GameState* game, Command* cmd);
 
 
 /**
+ * cmd_quests() - List quests
+ * @game: Pointer to current game state
+ * @cmd: Pointer to parsed command
+ *
+ * Return: Command execution result
+ */
+
+CommandResult cmd_quests(GameState* game, Command* cmd); 
+
+
+/**
  * cmd_help() - Display available commands
  * @game: Pointer to current game state
  * @cmd: Pointer to parsed command

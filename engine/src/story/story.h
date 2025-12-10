@@ -111,6 +111,37 @@ typedef struct NPC {
 
 
 /**
+ * struct Quest - Quest/objective definition
+ * @id: Unique quest identifier
+ * @name: Display name
+ * @description: Quest description/objective
+ * @required: Must be completed to win game
+ * @completed: Current completion status
+ * @completion_item: Item ID that completes quest (or empty)
+ * @completion_npc: NPC ID that completes quest (or empty)
+ * @completion_room: Room ID that completes quest (or empty)
+ * @completion_message: Message shown when quest completes
+ *
+ * A quest can be completed by:
+ * - Taking a specific item (completion_item set)
+ * - Talking to specific NPC (completion_npc set)
+ * - Entering specific room (completion_room set)
+ * Multiple conditions can be set (all must be met)
+ */
+typedef struct Quest {
+	char id[QUEST_ID_SIZE];
+	char name[QUEST_NAME_SIZE];
+	char description[QUEST_DESCRIPTION_SIZE];
+	bool required;
+	bool completed;
+	char completion_item[QUEST_COMPLETION_ID_SIZE];
+	char completion_npc[QUEST_COMPLETION_ID_SIZE];
+	char completion_room[QUEST_COMPLETION_ID_SIZE];
+	char completion_message[QUEST_DESCRIPTION_SIZE];
+} Quest;
+
+
+/**
  * struct Story - Complete story package
  * @metadata: Story metadata and settings
  * @rooms: Array of rooms
@@ -133,6 +164,9 @@ typedef struct {
 	
 	NPC* npcs;
 	int npc_count;
+
+	Quest* quests;
+	int quest_count;
 	
 	char story_dir[STORY_DIRECTORY_SIZE];
 } Story;
@@ -157,5 +191,8 @@ typedef struct {
 	char description[STORY_DESCRIPTION_SIZE];
 	char directory[STORY_DIRECTORY_SIZE];
 } StoryInfo;
+
+
+
 
 #endif /* STORY_H */

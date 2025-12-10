@@ -99,6 +99,23 @@ void look_at_current_room(GameState* game);
 
 
 /**
+ * check_and_complete_quests() - Check if any quests completed
+ * @game: Pointer to current game state
+ * @item_id: Item just acquired (or NULL)
+ * @npc_id: NPC just talked to (or NULL)
+ * @room_id: Room just entered (or NULL)
+ *
+ * Checks all incomplete quests to see if completion conditions are met.
+ * Displays completion message and updates quest status.
+ *
+ * Return: void
+ */
+
+void check_and_complete_quests(GameState* game, const char* item_id, 
+                               const char* npc_id, const char* room_id);
+
+
+/**
  * find_room_by_id() - Find a room by its identifier
  * @story: Pointer to story data
  * @room_id: String identifier of room to find

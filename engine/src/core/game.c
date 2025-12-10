@@ -15,6 +15,7 @@
 #include "constants.h"
 #include "core/logger.h"
 #include "game.h"
+#include "gameplay/quests.h"
 #include "world/items.h"
 #include "world/npcs.h"
 
@@ -133,20 +134,48 @@ void free_game_state(GameState* game) {
 }
 
 
- /**
-  * check_victory_condition() - Check if player has won the game
-  * @game: Pointer to current game state
-  * @param2: Description of second parameter
-  *
-  * Checks the game_won flag to determine if victory condition has been met.
-  *
-  * Return: True if player has won, false otherwise
-  */
- 
+/**
+ * check_victory_condition() - Check if player has won the game
+ * @game: Pointer to current game state
+ *
+ * Checks if all required quests are completed. If so, sets the
+ * game_won flag.
+ *
+ * Return: True if player has won, false otherwise
+ */
 bool check_victory_condition(GameState* game) {
-    return game->game_won;
-}
+	int required_count = 0;
+	int required_completed = 0;
 
+	/* Check existing flag first */
+	if (game->game_won)
+		return true;
+
+	/* If no quests, check old flag */
+	if (game->story->quest_count == 0)
+		return game->game_won;
+
+	/* Count required quests and their completion */
+	for (int i = 0; i < game->story->quest_count; i++) {
+		Quest *quest = &game->story->quests[i];
+		
+		if (quest->required) {
+			required_count++;
+			if (quest->completed)
+				required_completed++;
+		}
+	}
+
+	/* All required quests must be complete */
+	if (required_count > 0 && required_completed == required_count) {
+		game->game_won = true;
+		add_log_entry("Victory condition met: all %d required quests complete at %s",
+		             required_count, log_timestamp());
+		return true;
+	}
+
+	return false;
+}
 
  /**
   * look_at_current_room() - Display current room description
@@ -234,3 +263,55 @@ void look_at_current_room(GameState* game) {
 
     log_function_exit(__func__, 0);
 }
+
+
+/**
+ * check_and_complete_quests() - Check if any quests completed
+ * @game: Pointer to current game state
+ * @item_id: Item just acquired (or NULL)
+ * @npc_id: NPC just talked to (or NULL)
+ * @room_id: Room just entered (or NULL)
+ *
+ * Checks all incomplete quests to see if completion conditions are met.
+ * Displays completion message and updates quest status.
+ *
+ * Return: void
+ */
+void check_and_complete_quests(GameState* game, const char* item_id,
+                               const char* npc_id, const char* room_id) {
+	int i;
+	Quest *quest;
+
+	if (!game || game->story->quest_count == 0)
+		return;
+
+	for (i = 0; i < game->story->quest_count; i++) {
+		quest = &game->story->quests[i];
+
+		if (quest->completed)
+			continue;
+
+		if (check_quest_completion(quest, item_id, npc_id, room_id)) {
+			quest->completed = true;
+
+			printf("\n*** QUEST COMPLETED: %s ***\n", quest->name);
+			
+			if (strlen(quest->completion_message) > 0) {
+				printf("%s\n", quest->completion_message);
+			}
+			
+			printf("\n");
+
+			add_log_entry("Quest completed: %s (item=%s, npc=%s, room=%s) at %s",
+			             quest->id,
+			             item_id ? item_id : "none",
+			             npc_id ? npc_id : "none",
+			             room_id ? room_id : "none",
+			             log_timestamp());
+            
+            /* Check if this completed all requried quests */
+            check_victory_condition(game);
+		}
+	}
+}
+

@@ -16,9 +16,11 @@
 #include "core/logger.h"
 #include "core/utils.h"
 #include "game.h"
+#include "gameplay/quests.h"
 #include "system/save.h"
 #include "world/items.h"
 #include "world/npcs.h"
+
 
 /* Static function declarations */
 static const char* find_exit(Room* room, const char* direction);
@@ -53,6 +55,8 @@ CommandResult execute_command(GameState* game, Command* cmd) {
             return cmd_use(game, cmd);
         case CMD_TALK:
             return cmd_talk(game, cmd);
+        case CMD_QUESTS:
+            return cmd_quests(game, cmd);
         case CMD_HELP:
             return cmd_help(game, cmd);
         case CMD_QUIT:
@@ -155,6 +159,9 @@ CommandResult cmd_go(GameState* game, Command* cmd) {
     // Move to the new room
     game->current_room = destination;
     game->turn_count++;
+
+    // Check for quest completion (entering room)
+    check_and_complete_quests(game, NULL, NULL, destination->id);
 
     // Describe the new room;
     look_at_current_room(game);
@@ -330,6 +337,10 @@ CommandResult cmd_take(GameState* game, Command* cmd) {
             room->item_count--;
 
             printf("You take the %s.\n", item->name);
+
+            /* Check for quest completion (taking item) */
+            check_and_complete_quests(game, item->id, NULL, NULL);
+
             add_log_entry("Player took item: %s (weight=%d, total_weight=%d) at %s", item->name, item->weight, game->inventory_weight,      log_timestamp());
             log_function_exit(__func__, RESULT_OK);
             return RESULT_OK;
@@ -574,6 +585,9 @@ CommandResult cmd_talk(GameState* game, Command* cmd) {
                          npc->name, npc->dialog_index, 
                          npc->dialog_count, log_timestamp());
 
+            /* Check for quest completion (talking to NPC) */
+            check_and_complete_quests(game, NULL, npc->id, NULL);
+
             log_function_exit(__func__, RESULT_OK);
             return RESULT_OK;
         }
@@ -584,6 +598,85 @@ CommandResult cmd_talk(GameState* game, Command* cmd) {
                  cmd->noun, log_timestamp());
     log_function_exit(__func__, RESULT_ERROR);
     return RESULT_ERROR;
+}
+
+
+/**
+ * cmd_quests() - Display quest status
+ * @game: Pointer to current game state
+ * @cmd: Pointer to parsed command
+ *
+ * Shows all quests with their completion status. Required quests
+ * are marked with an asterisk.
+ *
+ * Return: RESULT_OK
+ */
+CommandResult cmd_quests(GameState* game, Command* cmd) {
+	int completed_count = 0;
+	int required_count = 0;
+	int required_completed = 0;
+
+	(void)cmd;
+
+	log_function_entry(__func__, "quest_count=%d", 
+	                  game->story->quest_count);
+
+	printf("\n=== QUESTS ===\n");
+
+	if (game->story->quest_count == 0) {
+		printf("No quests available.\n");
+		log_function_exit(__func__, RESULT_OK);
+		return RESULT_OK;
+	}
+
+	/* Count quest statistics */
+	for (int i = 0; i < game->story->quest_count; i++) {
+		Quest *quest = &game->story->quests[i];
+		
+		if (quest->completed)
+			completed_count++;
+		
+		if (quest->required) {
+			required_count++;
+			if (quest->completed)
+				required_completed++;
+		}
+	}
+
+	printf("\n");
+
+	/* Display each quest */
+	for (int i = 0; i < game->story->quest_count; i++) {
+		Quest *quest = &game->story->quests[i];
+		
+		printf("%s %s\n", 
+		       quest->completed ? "[X]" : "[ ]",
+		       quest->name);
+		
+		printf("    %s\n", quest->description);
+		
+		if (quest->required) {
+			printf("    (Required)\n");
+		}
+		
+		printf("\n");
+	}
+
+	/* Show summary */
+	printf("Progress: %d/%d quests completed\n", 
+	       completed_count, game->story->quest_count);
+	
+	if (required_count > 0) {
+		printf("Required: %d/%d completed\n", 
+		       required_completed, required_count);
+	}
+
+	add_log_entry("Player viewed quests: %d/%d complete at %s",
+	             completed_count, game->story->quest_count,
+	             log_timestamp());
+
+	log_function_exit(__func__, RESULT_OK);
+	return RESULT_OK;
 }
 
 
@@ -604,8 +697,8 @@ CommandResult cmd_help(GameState* game, Command* cmd) {
     printf("Movement:\n");
     printf("  go <direction>, north, south, east, west, n, s, e, w\n\n");
     printf("Interaction:\n");
-    printf("  look, examine <object>, take <item>, drop <item>\n");
-    printf("  use <item>, talk <npc>, inventory (or i)\n\n");
+    printf("  look (or l), examine (or x) <object>, take <item>, drop <item>\n");
+    printf("  use <item>, talk <npc>, inventory (or i), quests\n\n");
     printf("System:\n");
     printf("  help, save, load, quit\n\n");
     return RESULT_OK;

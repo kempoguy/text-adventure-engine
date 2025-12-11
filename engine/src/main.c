@@ -146,15 +146,17 @@ void start_new_game(void) {
     int story_count = scan_stories(&story_list);
     
     if (story_count == 0) {
-        printf( COLOR_RED "No stories found in stories/ directory!\n" COLOR_RESET );
-        printf("Press any key to continue...\n");
+        printf_colored(COLOR_ERROR, "No stories found in stories/ directory!\n");
+        printf_colored(COLOR_INFO, "Press any key to continue...\n");
         getchar();
         return;
     }
     
-    printf("Found %d story(s):\n", story_count);
+    printf_colored(COLOR_SUCCESS, "Found %d story(s):\n", story_count);
     for (int i = 0; i < story_count; i++) {
-        printf("%d. %s (by %s)\n", i + 1, story_list[i].title, story_list[i].author);
+        printf_colored(COLOR_BRIGHT_CYAN, "%d. ", i + 1);
+        printf_colored(COLOR_BOLD, "%s ", story_list[i].title);
+        printf_colored(COLOR_GRAY, "(by %s)\n", story_list[i].author);
     }
     
     // Let player select story
@@ -167,17 +169,18 @@ void start_new_game(void) {
     }
     
     // Validate story
-    printf("\nValidating story...\n");
+    printf("\n");
+    printf_colored(COLOR_INFO, "Validating story...\n");
     if (!validate_story(story)) {
-        printf(COLOR_RED "Story validation failed! Cannot play this story.\n" COLOR_RESET);
+        printf_colored(COLOR_ERROR, "Story validation failed! Cannot play this story.\n");
         free_story(story);
         free(story_list);
-        printf("Press any key to continue...\n");
+        printf_colored(COLOR_INFO, "Press any key to continue...\n");
         getchar();
         return;
     }
     
-    printf(COLOR_GREEN "Story validated successfully!\n\n" COLOR_RESET);
+    printf(COLOR_SUCCESS "Story validated successfully!\n\n");
     
     // Initialize game state
     GameState* game = init_game_state(story);
@@ -264,12 +267,13 @@ void play_game(GameState* game) {
         // Check for victory
         if (check_victory_condition(game)) {
             printf("\n");
-            printf(COLOR_CYAN "========================================\n" COLOR_RESET);
-            printf(COLOR_GREEN "  VICTORY!\n" COLOR_RESET);
-            printf(COLOR_CYAN "========================================\n" COLOR_RESET);
+            printf_colored(COLOR_SUCCESS COLOR_BOLD, "========================================\n");
+            printf_colored(COLOR_SUCCESS COLOR_BOLD, "  VICTORY!\n");
+            printf_colored(COLOR_SUCCESS COLOR_BOLD, "========================================\n");
             printf("\n");
-            printf("%s\n", game->story->metadata.victory_text);
-            printf("\nPress any key to continue...\n");
+            printf_colored(COLOR_BRIGHT_GREEN, "%s\n", game->story->metadata.victory_text);
+            printf("\n");
+            printf_colored(COLOR_INFO, "Press any key to continue...\n");
             getchar();
             playing = false;
         }

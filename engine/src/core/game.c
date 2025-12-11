@@ -222,14 +222,15 @@ void look_at_current_room(GameState* game) {
     }
 
     /* Print room name */
-    printf("%s\n", room->name);
+    printf_colored(COLOR_BOLD COLOR_CYAN, "%s\n", room->name);
 
     /* Print room description */
     printf("%s\n", room->description);
 
     /* If dark and no light, hide details */
     if (room->dark && !has_light) {
-        printf("\nIt's too dark to see anything!\n");
+        printf("\n");
+        printf_colored(COLOR_WARNING,"It's too dark to see anything!\n");
         add_log_entry("Room is dark, player has no light at %s", log_timestamp());
         log_function_exit(__func__,0);
         return;
@@ -238,7 +239,8 @@ void look_at_current_room(GameState* game) {
 
     /* Print exits */
     if (room->exit_count > 0) {
-        printf("\nExits:");
+        printf("\n");
+        printf_colored(COLOR_BOLD,"Exits:");
         for (int i = 0; i < room->exit_count; i++) {
             /* Parse "direction:room_id" format */
             char exit_copy[PARSER_EXIT_BUFFER_SIZE];
@@ -252,27 +254,31 @@ void look_at_current_room(GameState* game) {
                 
                 /* Show if exit is locked */
                 if (room->locked && strcmp(direction, room->locked_exit) == 0) {
-                    printf(" %s (locked)", direction);
+                    printf(" ");
+                    printf_colored(COLOR_RED, "%s (locked)", direction);
                 } else {
-                    printf(" %s", direction);
+                    printf(" ");
+                    printf_colored(COLOR_GREEN, "%s", direction);
                 }
             }
         }
         printf("\n");
     } else {
-        printf("No obvious exits.\n");
+        printf_colored(COLOR_GRAY, "No obvious exits.\n");
     }
 
     /* Print items (if any) */
     if (room->item_count > 0) {
-        printf("\nYou see:");
+        printf("\n");
+        printf_colored(COLOR_BOLD,"You see:");
         for (int i = 0; i < room->item_count; i++) {
             /* Find the item by ID */
             Item *item = find_item_by_id(game->story->items,
                                          game->story->item_count,
                                          room->items[i]);
             if (item) {
-                printf(" %s", item->name);
+                printf(" ");
+                printf_colored(COLOR_ITEM, "%s", item->name);
             } else {
                 printf(" [unknown item: %s]", room->items[i]);
             }
@@ -282,13 +288,15 @@ void look_at_current_room(GameState* game) {
 
     /* Print NPCs (if any) */
     if (room->npc_count > 0) {
-        printf("\nPresent:");
+        printf("\n");
+        printf_colored(COLOR_BOLD, "Present:");
         for (int i = 0; i < room->npc_count; i++) {
             NPC *npc = find_npc_by_id(game->story->npcs,
                                       game->story->npc_count,
                                       room->npcs[i]);
             if (npc) {
-                printf(" %s", npc->name);
+                printf(" ");
+                printf_colored(COLOR_NPC, "%s", npc->name);
             } else {
                 printf(" [unknown NPC: %s]", room->npcs[i]);
             }
@@ -329,10 +337,11 @@ void check_and_complete_quests(GameState* game, const char* item_id,
 		if (check_quest_completion(quest, item_id, npc_id, room_id)) {
 			quest->completed = true;
 
-			printf("\n*** QUEST COMPLETED: %s ***\n", quest->name);
+			printf("\n");
+            printf_colored(COLOR_QUEST, "*** QUEST COMPLETED: %s ***\n", quest->name);
 			
 			if (strlen(quest->completion_message) > 0) {
-				printf("%s\n", quest->completion_message);
+				printf_colored(COLOR_SUCCESS, "%s\n", quest->completion_message);
 			}
 			
 			printf("\n");

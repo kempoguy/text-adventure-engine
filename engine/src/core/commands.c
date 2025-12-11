@@ -12,6 +12,7 @@
 #include <strings.h>
 #include <time.h>
 
+
 #include "commands.h"
 #include "constants.h"
 #include "core/logger.h"
@@ -19,6 +20,7 @@
 #include "game.h"
 #include "gameplay/quests.h"
 #include "system/save.h"
+#include "ui/colors.h"
 #include "world/items.h"
 #include "world/npcs.h"
 
@@ -70,7 +72,7 @@ CommandResult execute_command(GameState* game, Command* cmd) {
         case CMD_LOAD:
             return cmd_load(game, cmd);
         default:
-            printf("I don't understand '%s'.\n", cmd->verb);
+            printf_colored(COLOR_INFO, "I don't understand '%s'.\n", cmd->verb);
             return RESULT_INVALID;
     }
 }
@@ -132,7 +134,7 @@ static const char* find_exit(Room* room, const char* direction) {
 CommandResult cmd_go(GameState* game, Command* cmd) {
     // Check if direction was provided
     if (strlen(cmd->noun) == 0) {
-        printf("Go where? (Try: north, south, east, west)\n");
+        printf_colored(COLOR_ERROR, "Go where? (Try: north, south, east, west)\n");
         return RESULT_ERROR;
     }
 
@@ -148,13 +150,13 @@ CommandResult cmd_go(GameState* game, Command* cmd) {
     const char* destination_id = find_exit(game->current_room, direction);
 
     if (!destination_id) {
-        printf("You can't go %s from here.\n", direction);
+        printf_colored(COLOR_ERROR, "You can't go %s from here.\n", direction);
         return RESULT_ERROR;
     }
 
     /* Check if exit is locked */
     if (game->current_room->locked && strcmp(direction, game->current_room->locked_exit) == 0) {
-        printf("The %s exit is locked. You need to unlock it first.\n", direction);
+        printf_colored(COLOR_INFO, "The %s exit is locked. You need to unlock it first.\n", direction);
         add_log_entry("Player tried locked exit: %s at %s", direction, log_timestamp());
         return RESULT_ERROR;
     }
@@ -163,7 +165,7 @@ CommandResult cmd_go(GameState* game, Command* cmd) {
     Room* destination = find_room_by_id(game->story, destination_id);
 
     if (!destination) {
-        printf("ERROR: Exit leads to non-existent room '%s'!\n", destination_id);
+        printf_colored(COLOR_ERROR, "ERROR: Exit leads to non-existent room '%s'!\n", destination_id);
         return RESULT_ERROR;
     }
 
@@ -186,14 +188,11 @@ CommandResult cmd_go(GameState* game, Command* cmd) {
  * @game: Pointer to current game state
  * @cmd: Pointer to parsed command
  *
- * STUB
  *
  * Return: CommandResult execution result
  */
 
 CommandResult cmd_look(GameState* game, Command* cmd) {
-    (void)game; // TODO
-    (void)cmd; // TODO
     look_at_current_room(game);
     return RESULT_OK;
 }
@@ -216,7 +215,7 @@ CommandResult cmd_examine(GameState* game, Command* cmd) {
     log_function_entry(__func__, "noun=%s, room=%s", cmd->noun, game->current_room->id);
 
     if (strlen(cmd->noun) == 0) {
-        printf("Examine what?\n");
+        printf_colored(COLOR_ERROR, "Examine what?\n");
         log_function_exit(__func__, RESULT_ERROR);
         return RESULT_ERROR;
     }
@@ -296,7 +295,7 @@ CommandResult cmd_take(GameState* game, Command* cmd) {
                       cmd->noun, game->current_room->id);
 
     if (strlen(cmd->noun) == 0) {
-        printf("Take what?\n");
+        printf_colored(COLOR_ERROR, "Take what?\n");
         return RESULT_ERROR;
     }
 
@@ -347,7 +346,7 @@ CommandResult cmd_take(GameState* game, Command* cmd) {
             }
             room->item_count--;
 
-            printf("You take the %s.\n", item->name);
+            printf_colored(COLOR_SUCCESS, "You take the %s.\n", item->name);
 
             /* Check for quest completion (taking item) */
             check_and_complete_quests(game, item->id, NULL, NULL);
@@ -385,7 +384,7 @@ CommandResult cmd_drop(GameState* game, Command* cmd) {
                       cmd->noun, game->current_room->id);
 
     if (strlen(cmd->noun) == 0) {
-        printf("Drop what?\n");
+        printf_colored(COLOR_ERROR, "Drop what?\n");
         log_function_exit(__func__, RESULT_ERROR);
         return RESULT_ERROR;
     }
@@ -414,7 +413,7 @@ CommandResult cmd_drop(GameState* game, Command* cmd) {
             }
             game->inventory_count--;
 
-            printf("You drop the %s.\n", item->name);
+            printf_colored(COLOR_INFO, "You drop the %s.\n", item->name);
             add_log_entry("Player dropped item: %s (weight=%d, total_weight=%d) at %s",
                          item->name, item->weight, game->inventory_weight,
                          log_timestamp());
@@ -449,19 +448,30 @@ CommandResult cmd_inventory(GameState* game, Command* cmd) {
                       game->inventory_weight,
                       game->story->metadata.max_inventory_weight);
 
-    printf("\n=== INVENTORY ===\n");
+    printf("\n");
+    printf_colored(COLOR_BOLD, "=== INVENTORY ===\n");
 
     if (game->inventory_count == 0) {
-        printf("You are not carrying anything.\n");
+        printf_colored(COLOR_GRAY, "You are not carrying anything.\n");
     } else {
         printf("You are carrying:\n");
         for (int i = 0; i < game->inventory_count; i++) {
             Item *item = game->inventory[i];
-            printf("  - %s (%d kg)\n", item->name, item->weight);
+            printf("  - ");
+            printf_colored(COLOR_ITEM, "%s", item->name);
+            printf(" (%d kg)\n", item->weight);
         }
-        printf("\nTotal weight: %d / %d kg\n", 
-               game->inventory_weight,
-               game->story->metadata.max_inventory_weight);
+        printf("\nTotal weight:"); 
+
+        /* Color code based on how full inventory is */
+		float percent = (float)game->inventory_weight / (float)game->story->metadata.max_inventory_weight;
+		const char *weight_color = COLOR_GREEN;
+		if (percent > 0.8) weight_color = COLOR_RED;
+		else if (percent > 0.6) weight_color = COLOR_YELLOW;
+		
+		printf_colored(weight_color, "%d", game->inventory_weight);
+		printf(" / %d kg\n", game->story->metadata.max_inventory_weight);
+       
     }
 
     log_function_exit(__func__, RESULT_OK);
@@ -488,7 +498,7 @@ CommandResult cmd_use(GameState* game, Command* cmd) {
 	                  game->current_room->id);
 
 	if (strlen(cmd->noun) == 0) {
-		printf("Use what?\n");
+		printf_colored(COLOR_ERROR, "Use what?\n");
 		log_function_exit(__func__, RESULT_ERROR);
 		return RESULT_ERROR;
 	}
@@ -513,7 +523,7 @@ CommandResult cmd_use(GameState* game, Command* cmd) {
 			/* ILLUMINATION EFFECT */
 			if (item->illuminates) {
 				if (game->current_room->dark) {
-					printf("The %s illuminates the area!\n", item->name);
+					printf_colored(COLOR_MAGIC, "The %s illuminates the area!\n", item->name);
 					printf("\n");
 					look_at_current_room(game);
 					add_log_entry("Player used illumination in dark room at %s",
@@ -531,7 +541,7 @@ CommandResult cmd_use(GameState* game, Command* cmd) {
 			/* UNLOCKING EFFECT */
 			if (item->unlocks) {
 				if (game->current_room->locked) {
-					printf("You use the %s to unlock the %s exit!\n",
+					printf_colored(COLOR_SUCCESS, "You use the %s to unlock the %s exit!\n",
 					       item->name, game->current_room->locked_exit);
 					
 					/* Unlock the exit */
@@ -590,7 +600,7 @@ CommandResult cmd_talk(GameState* game, Command* cmd) {
                       cmd->noun, game->current_room->id);
 
     if (strlen(cmd->noun) == 0) {
-        printf("Talk to whom?\n");
+        printf_colored(COLOR_ERROR, "Talk to whom?\n");
         log_function_exit(__func__, RESULT_ERROR);
         return RESULT_ERROR;
     }
@@ -619,8 +629,10 @@ CommandResult cmd_talk(GameState* game, Command* cmd) {
             }
 
             /* Display current dialog line */
-            printf("\n%s says:\n\"%s\"\n", 
-                   npc->name, 
+            printf("\n");
+            printf_colored(COLOR_NPC, "%s", npc->name);
+            printf(" says:\n");
+            printf_colored(COLOR_CYAN, "\"%s\"\n", 
                    npc->dialog[npc->dialog_index]);
 
             /* Advance to next dialog line (cycle) */
@@ -668,7 +680,7 @@ CommandResult cmd_attack(GameState* game, Command* cmd) {
 	                  cmd->noun, game->current_room->id);
 
 	if (strlen(cmd->noun) == 0) {
-		printf("Attack whom?\n");
+		printf_colored(COLOR_ERROR, "Attack whom?\n");
 		log_function_exit(__func__, RESULT_ERROR);
 		return RESULT_ERROR;
 	}
@@ -740,8 +752,9 @@ CommandResult cmd_attack(GameState* game, Command* cmd) {
 
 			/* 5% chance to flee */
 			if (roll < COMBAT_FLEE_CHANCE) {
-				printf("\n\"RUN AWAY! RUN AWAY!\"\n");
-				printf("Having soiled your armor, you flee in terror!\n\n");
+				printf("\n");
+                printf_colored(COLOR_BRIGHT_YELLOW, "\"RUN AWAY! RUN AWAY!\"\n");
+				printf_colored(COLOR_WARNING, "Having soiled your armor, you flee in terror!\n\n");
 
 				/* Select random unlocked exit */
 				if (room->exit_count > 0) {
@@ -803,18 +816,18 @@ CommandResult cmd_attack(GameState* game, Command* cmd) {
 				/* Show combat text if available */
 				if (npc->combat_text_count > 0) {
 					int text_idx = rand() % npc->combat_text_count;
-					printf("%s says: \"%s\"\n", npc->name, npc->combat_text[text_idx]);
+					printf_colored(COLOR_NPC, "%s says: \"%s\"\n", npc->name, npc->combat_text[text_idx]);
 				} else {
-					printf("You hit %s!\n", npc->name);
+					printf_colored(COLOR_COMBAT_HIT, "You hit %s!\n", npc->name);
 				}
 				
-				printf("Enemy HP: %d/%d\n\n", 
-				       npc->combat_hp > 0 ? npc->combat_hp : 0, 
-				       npc->combat_hp + 1);
+				printf("Enemy HP: ");
+				printf_colored(COLOR_GREEN, "%d", npc->combat_hp > 0 ? npc->combat_hp : 0);
+				printf("/%d\n\n", npc->combat_hp + 1);
 
 				/* Check if NPC defeated */
 				if (npc->combat_hp <= 0) {
-					printf("*** %s has been defeated! ***\n\n", npc->name);
+					printf_colored(COLOR_SUCCESS, "*** %s has been defeated! ***\n\n", npc->name);
 					npc->defeated = true;
 					game->combat_npc = NULL;
 					game->player_combat_hp = COMBAT_MAX_HP;
@@ -829,15 +842,16 @@ CommandResult cmd_attack(GameState* game, Command* cmd) {
 			else {
 				game->player_combat_hp -= npc->combat_damage;
 				
-				printf("%s strikes you!\n", npc->name);
-				printf("Your HP: %d/%d\n\n", 
-				       game->player_combat_hp > 0 ? game->player_combat_hp : 0,
-				       COMBAT_MAX_HP);
+				printf_colored(COLOR_COMBAT_MISS, "%s strikes you!\n", npc->name);
+				printf("Your HP: ");
+				printf_colored(game->player_combat_hp > 3 ? COLOR_GREEN : COLOR_RED, 
+				              "%d", game->player_combat_hp > 0 ? game->player_combat_hp : 0);
+				printf("/%d\n\n", COMBAT_MAX_HP);
 
 				/* Check if player died */
 				if (game->player_combat_hp <= 0) {
-					printf("\n*** YOU HAVE DIED ***\n");
-					printf("Cause of death: %s\n\n", npc->name);
+					printf_colored(COLOR_DEATH, "\n*** YOU HAVE DIED ***\n");
+					printf_colored(COLOR_DANGER, "Cause of death: %s\n\n", npc->name);
 					
 					game->death_count++;
 					game->combat_npc = NULL;
@@ -883,16 +897,17 @@ CommandResult cmd_quests(GameState* game, Command* cmd) {
 	int completed_count = 0;
 	int required_count = 0;
 	int required_completed = 0;
-
-	(void)cmd;
+ 
+	(void) cmd;
 
 	log_function_entry(__func__, "quest_count=%d", 
 	                  game->story->quest_count);
 
-	printf("\n=== QUESTS ===\n");
+	printf("\n");
+    printf_colored(COLOR_BOLD, "=== QUESTS ===\n");
 
 	if (game->story->quest_count == 0) {
-		printf("No quests available.\n");
+		printf_colored(COLOR_GRAY, "No quests available.\n");
 		log_function_exit(__func__, RESULT_OK);
 		return RESULT_OK;
 	}
@@ -917,22 +932,26 @@ CommandResult cmd_quests(GameState* game, Command* cmd) {
 	for (int i = 0; i < game->story->quest_count; i++) {
 		Quest *quest = &game->story->quests[i];
 		
-		printf("%s %s\n", 
-		       quest->completed ? "[X]" : "[ ]",
-		       quest->name);
-		
-		printf("    %s\n", quest->description);
+		if (quest->completed) {
+            printf_colored(COLOR_SUCCESS, "[X] ");
+        } else { 
+            printf_colored(COLOR_GRAY, "[ ] ");
+        }
+        
+        printf_colored(quest->completed ? COLOR_GREEN : COLOR_WHITE, "%s\n", quest->name);
+        printf("    %s\n", quest->description);
 		
 		if (quest->required) {
 			printf("    (Required)\n");
 		}
 		
 		printf("\n");
-	}
+    }
 
 	/* Show summary */
-	printf("Progress: %d/%d quests completed\n", 
-	       completed_count, game->story->quest_count);
+	printf("Progress:");
+    printf_colored(COLOR_INFO, "%d/%d", completed_count, game->story->quest_count);
+    printf(" quests completed\n");
 	
 	if (required_count > 0) {
 		printf("Required: %d/%d completed\n", 
@@ -944,7 +963,10 @@ CommandResult cmd_quests(GameState* game, Command* cmd) {
 	             log_timestamp());
 
 	log_function_exit(__func__, RESULT_OK);
-	return RESULT_OK;
+	return RESULT_OK; 
+
+
+    
 }
 
 
@@ -961,14 +983,28 @@ CommandResult cmd_quests(GameState* game, Command* cmd) {
 CommandResult cmd_help(GameState* game, Command* cmd) {
     (void)game; // TODO
     (void)cmd; // TODO
-    printf("\n=== AVAILABLE COMMANDS ===\n\n");
-    printf("Movement:\n");
-    printf("  go <direction>, north, south, east, west, n, s, e, w\n\n");
-    printf("Interaction:\n");
-    printf("  look (or l), examine (or x) <object>, take <item>, drop <item>\n");
-    printf("  use <item>, talk <npc>, attack <npc>, inventory (or i), quests (or q)\n\n");
-    printf("System:\n");
-    printf("  help, save, load, quit\n\n");
+    printf("\n");
+    printf_colored(COLOR_BOLD COLOR_CYAN, "=== AVAILABLE COMMANDS ===\n\n");
+
+    printf_colored(COLOR_BOLD, "Movement:\n");
+    printf("  ");
+    printf_colored(COLOR_GREEN, "  go <direction>");
+    printf(", ");
+    printf_colored(COLOR_GREEN, "north, south, east, west, n, s, e, w");
+    printf("\n\n");
+
+    printf_colored(COLOR_BOLD, "Interaction:\n");
+    printf("  ");
+    printf_colored(COLOR_YELLOW, "look (or l), examine (or x) <object>, take <item>, drop <item>");
+    printf("\n  ");
+    printf_colored(COLOR_BOLD, "use <item>, talk <npc>, attack <npc>, inventory (or i), quests (or q)");
+    printf("\n\n");
+
+    printf_colored(COLOR_BOLD,"System:\n");
+    printf("  ");
+    printf_colored(COLOR_CYAN, "help, save, load, quit");
+    printf("\n\n");
+
     return RESULT_OK;
 }
 
@@ -1026,16 +1062,16 @@ CommandResult cmd_save(GameState* game, Command* cmd) {
         }
     }
 
-    printf("Saving game to slot %d...\n", slot);
+    printf_colored(COLOR_INFO, "Saving game to slot %d...\n", slot);
     
     result = save_game(game, slot);
     if (result < 0) {
-        printf("Error: Failed to save game.\n");
+        printf_colored(COLOR_ERROR, "Error: Failed to save game.\n");
         log_function_exit(__func__, RESULT_ERROR);
         return RESULT_ERROR;
     }
 
-    printf("Game saved successfully!\n");
+    printf_colored(COLOR_SUCCESS, "Game saved successfully!\n");
     log_function_exit(__func__, RESULT_OK);
     return RESULT_OK;
 }
@@ -1069,21 +1105,21 @@ CommandResult cmd_load(GameState* game, Command* cmd) {
 
     /* Check if save exists */
     if (!save_exists(slot)) {
-        printf("No saved game in slot %d.\n", slot);
+        printf_colored(COLOR_ERROR, "No saved game in slot %d.\n", slot);
         log_function_exit(__func__, RESULT_ERROR);
         return RESULT_ERROR;
     }
 
-    printf("Loading game from slot %d...\n", slot);
+    printf_colored(COLOR_INFO, "Loading game from slot %d...\n", slot);
     
     result = load_game(game, slot);
     if (result < 0) {
-        printf("Error: Failed to load game.\n");
+        printf_colored(COLOR_ERROR, "Error: Failed to load game.\n");
         log_function_exit(__func__, RESULT_ERROR);
         return RESULT_ERROR;
     }
 
-    printf("Game loaded successfully!\n");
+    printf_colored(COLOR_SUCCESS, "Game loaded successfully!\n");
     
     /* Show current room after loading */
     look_at_current_room(game);

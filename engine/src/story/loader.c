@@ -13,11 +13,12 @@
 #include <string.h>
 
 #include "core/constants.h"
+#include "core/logger.h"
 #include "core/utils.h" 
 #include "ini_parser.h"
 #include "gameplay/quests.h"
 #include "loader.h"
-#include "core/logger.h"
+#include "ui/colors.h"
 #include "world/items.h"
 #include "world/npcs.h"
 
@@ -211,7 +212,7 @@ Story* load_story(const char* story_dir) {
 
     log_function_entry(__func__, "story_dir=%s", story_dir);
 
-    printf("Loading story from: %s\n", story_dir);
+    printf_colored(COLOR_INFO, "Loading story from: %s\n", story_dir);
 
     // Allocate story structure
     story = malloc(sizeof(Story));
@@ -232,7 +233,7 @@ Story* load_story(const char* story_dir) {
     add_log_entry("Opening story file: %s at %s", filepath, log_timestamp());
     fp = fopen(filepath, "r");
     if (!fp) {
-        printf("ERROR: Cannot open %s\n", filepath);
+        printf_colored(COLOR_ERROR, "ERROR: Cannot open %s\n", filepath);
         log_function_error(__func__, "ERROR: Failed to open story.ini");
         free(story);
         return NULL;
@@ -252,7 +253,6 @@ Story* load_story(const char* story_dir) {
 
         /* Try to parse as key=value */
         if (parse_ini_keyvalue(line, key, sizeof(key), value, sizeof(value))) {
-            printf("    %s = %s\n", key, value);
 
             /* If we're in the STORY section, populate metadata */
             if (strcmp(current_section, "STORY") == 0) {
@@ -296,14 +296,14 @@ Story* load_story(const char* story_dir) {
     /* Load rooms */
     story->room_count = load_rooms(story_dir, &story->rooms);
     if (story->room_count == 0) {
-        printf("WARNING: No rooms loaded!\n");
+        printf_colored(COLOR_WARNING, "WARNING: No rooms loaded!\n");
         log_function_error(__func__, "WARNING: No rooms loaded from story");
     }
     
     /* Load items */
     story->item_count = load_items(story_dir, &story->items);
     if (story->item_count == 0) {
-        printf("WARNING: No items loaded!\n");
+        printf_colored(COLOR_WARNING, "WARNING: No items loaded!\n");
         log_function_error(__func__, "WARNING: No items loaded from story");
     } else {
         add_log_entry("Loaded %d items at %s", story->item_count, log_timestamp());
@@ -312,7 +312,7 @@ Story* load_story(const char* story_dir) {
     /* Load NPCs */
     story->npc_count = load_npcs(story_dir, &story->npcs);
     if (story->npc_count == 0) {
-        printf("WARNING: No NPCs loaded!\n");
+        printf_colored(COLOR_WARNING, "WARNING: No NPCs loaded!\n");
         log_function_error(__func__, "WARNING: No NPCs loaded from story");
     } else {
         add_log_entry("Loaded %d NPCs at %s", story->npc_count, log_timestamp());
@@ -321,7 +321,7 @@ Story* load_story(const char* story_dir) {
     /* Load quests */
     story->quest_count = load_quests(story_dir, &story->quests);
     if (story->quest_count == 0) {
-        printf("WARNING: No quests loaded!\n");
+        printf_colored(COLOR_WARNING, "WARNING: No quests loaded!\n");
         log_function_error(__func__, "WARNING: No quests loaded from story");
     } else {
         add_log_entry("Loaded %d quests at %s", story->quest_count, log_timestamp());

@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <time.h>
 
 #include "commands.h"
 #include "constants.h"
@@ -20,6 +21,7 @@
 #include "system/save.h"
 #include "world/items.h"
 #include "world/npcs.h"
+
 
 
 /* Static function declarations */
@@ -55,6 +57,8 @@ CommandResult execute_command(GameState* game, Command* cmd) {
             return cmd_use(game, cmd);
         case CMD_TALK:
             return cmd_talk(game, cmd);
+        case CMD_ATTACK:
+            return cmd_attack(game, cmd);
         case CMD_QUESTS:
             return cmd_quests(game, cmd);
         case CMD_HELP:
@@ -643,6 +647,229 @@ CommandResult cmd_talk(GameState* game, Command* cmd) {
 
 
 /**
+ * cmd_attack() - Attack an NPC (combat system)
+ * @game: Pointer to current game state
+ * @cmd: Pointer to parsed command
+ *
+ * Initiates or continues combat with a hostile NPC. Combat is turn-based
+ * with randomized outcomes: 75% player hit, 20% NPC hit, 5% flee.
+ *
+ * Return: RESULT_OK, RESULT_ERROR, or RESULT_QUIT on death
+ */
+CommandResult cmd_attack(GameState* game, Command* cmd) {
+	Room *room;
+	NPC *npc;
+	int i;
+	float roll;
+	float win_chance;
+	bool has_item;
+
+	log_function_entry(__func__, "noun=%s, room=%s",
+	                  cmd->noun, game->current_room->id);
+
+	if (strlen(cmd->noun) == 0) {
+		printf("Attack whom?\n");
+		log_function_exit(__func__, RESULT_ERROR);
+		return RESULT_ERROR;
+	}
+
+	room = game->current_room;
+
+	/* Search for NPC in current room */
+	for (i = 0; i < room->npc_count; i++) {
+		npc = find_npc_by_id(game->story->npcs,
+		                    game->story->npc_count,
+		                    room->npcs[i]);
+		
+		if (!npc)
+			continue;
+
+		/* Match by name or ID (with fuzzy matching) */
+		if (strcasecmp(npc->name, cmd->noun) == 0 ||
+		    strcasecmp(npc->id, cmd->noun) == 0 ||
+		    contains_ignore_case(npc->name, cmd->noun)) {
+
+			/* Check if NPC can be fought */
+			if (!npc->hostile) {
+				printf("You can't attack %s!\n", npc->name);
+				log_function_exit(__func__, RESULT_ERROR);
+				return RESULT_ERROR;
+			}
+
+			/* Check if already defeated */
+			if (npc->defeated) {
+				printf("%s has already been defeated.\n", npc->name);
+				log_function_exit(__func__, RESULT_OK);
+				return RESULT_OK;
+			}
+
+			/* Initialize combat if not already fighting */
+			if (game->combat_npc == NULL) {
+				game->combat_npc = npc;
+				game->player_combat_hp = COMBAT_MAX_HP;
+				
+				printf("\nYou engage %s in combat!\n", npc->name);
+				if (strlen(npc->description) > 0) {
+					printf("%s\n", npc->description);
+				}
+				printf("\n");
+				
+				add_log_entry("Combat started with: %s at %s",
+				             npc->name, log_timestamp());
+			}
+
+			/* Check if player has required item */
+			has_item = false;
+			if (strlen(npc->required_item) > 0) {
+				for (int j = 0; j < game->inventory_count; j++) {
+					if (strcmp(game->inventory[j]->id, npc->required_item) == 0) {
+						has_item = true;
+						break;
+					}
+				}
+			}
+
+			/* Determine win chance */
+			win_chance = has_item ? npc->item_win_chance : npc->base_win_chance;
+
+			/* Roll for outcome */
+			roll = (float)rand() / (float)RAND_MAX;
+
+			add_log_entry("Combat turn: roll=%.2f, win_chance=%.2f, has_item=%d at %s",
+			             roll, win_chance, has_item, log_timestamp());
+
+			/* 5% chance to flee */
+			if (roll < COMBAT_FLEE_CHANCE) {
+				printf("\n\"RUN AWAY! RUN AWAY!\"\n");
+				printf("Having soiled your armor, you flee in terror!\n\n");
+
+				/* Select random unlocked exit */
+				if (room->exit_count > 0) {
+					int exit_idx = rand() % room->exit_count;
+					
+					/* Parse exit to get direction and room_id */
+					char exit_copy[PARSER_EXIT_BUFFER_SIZE];
+					strncpy(exit_copy, room->exits[exit_idx], sizeof(exit_copy) - 1);
+					exit_copy[sizeof(exit_copy) - 1] = '\0';
+					
+					char *colon = strchr(exit_copy, ':');
+					if (colon) {
+						*colon = '\0';
+						char *direction = exit_copy;
+						char *dest_id = colon + 1;
+						
+						/* Check if exit is locked */
+						if (room->locked && strcmp(direction, room->locked_exit) == 0) {
+							/* Try another exit */
+							exit_idx = (exit_idx + 1) % room->exit_count;
+							strncpy(exit_copy, room->exits[exit_idx], sizeof(exit_copy) - 1);
+							exit_copy[sizeof(exit_copy) - 1] = '\0';
+							colon = strchr(exit_copy, ':');
+							if (colon) {
+								*colon = '\0';
+								dest_id = colon + 1;
+							}
+						}
+						
+						/* Move to destination */
+						Room *dest = find_room_by_id(game->story, dest_id);
+						if (dest) {
+							game->current_room = dest;
+							game->combat_npc = NULL;
+							game->player_combat_hp = COMBAT_MAX_HP;
+							
+							look_at_current_room(game);
+							
+							add_log_entry("Player fled combat to: %s at %s",
+							             dest->id, log_timestamp());
+							log_function_exit(__func__, RESULT_OK);
+							return RESULT_OK;
+						}
+					}
+				}
+				
+				/* Fallback if no valid exit */
+				printf("You can't find a way out! (You soil your armor (again...))\n");
+				game->combat_npc = NULL;
+				game->player_combat_hp = COMBAT_MAX_HP;
+				log_function_exit(__func__, RESULT_OK);
+				return RESULT_OK;
+			}
+
+			/* Player hits */
+			if (roll < win_chance) {
+				npc->combat_hp--;
+				
+				/* Show combat text if available */
+				if (npc->combat_text_count > 0) {
+					int text_idx = rand() % npc->combat_text_count;
+					printf("%s says: \"%s\"\n", npc->name, npc->combat_text[text_idx]);
+				} else {
+					printf("You hit %s!\n", npc->name);
+				}
+				
+				printf("Enemy HP: %d/%d\n\n", 
+				       npc->combat_hp > 0 ? npc->combat_hp : 0, 
+				       npc->combat_hp + 1);
+
+				/* Check if NPC defeated */
+				if (npc->combat_hp <= 0) {
+					printf("*** %s has been defeated! ***\n\n", npc->name);
+					npc->defeated = true;
+					game->combat_npc = NULL;
+					game->player_combat_hp = COMBAT_MAX_HP;
+					
+					add_log_entry("Combat victory: defeated %s at %s",
+					             npc->name, log_timestamp());
+					log_function_exit(__func__, RESULT_OK);
+					return RESULT_OK;
+				}
+			}
+			/* NPC hits player */
+			else {
+				game->player_combat_hp -= npc->combat_damage;
+				
+				printf("%s strikes you!\n", npc->name);
+				printf("Your HP: %d/%d\n\n", 
+				       game->player_combat_hp > 0 ? game->player_combat_hp : 0,
+				       COMBAT_MAX_HP);
+
+				/* Check if player died */
+				if (game->player_combat_hp <= 0) {
+					printf("\n*** YOU HAVE DIED ***\n");
+					printf("Cause of death: %s\n\n", npc->name);
+					
+					game->death_count++;
+					game->combat_npc = NULL;
+					game->player_combat_hp = COMBAT_MAX_HP;
+					
+					/* Respawn at starting room */
+					Room *respawn = find_room_by_id(game->story, game->respawn_room);
+					if (respawn) {
+						game->current_room = respawn;
+						printf("You respawn at %s...\n\n", respawn->name);
+						look_at_current_room(game);
+					}
+					
+					add_log_entry("Player died to: %s, deaths=%d at %s",
+					             npc->name, game->death_count, log_timestamp());
+					log_function_exit(__func__, RESULT_OK);
+					return RESULT_OK;
+				}
+			}
+
+			log_function_exit(__func__, RESULT_OK);
+			return RESULT_OK;
+		}
+	}
+
+	printf("There's no '%s' here to attack.\n", cmd->noun);
+	log_function_exit(__func__, RESULT_ERROR);
+	return RESULT_ERROR;
+}
+
+
+/**
  * cmd_quests() - Display quest status
  * @game: Pointer to current game state
  * @cmd: Pointer to parsed command
@@ -739,7 +966,7 @@ CommandResult cmd_help(GameState* game, Command* cmd) {
     printf("  go <direction>, north, south, east, west, n, s, e, w\n\n");
     printf("Interaction:\n");
     printf("  look (or l), examine (or x) <object>, take <item>, drop <item>\n");
-    printf("  use <item>, talk <npc>, inventory (or i), quests\n\n");
+    printf("  use <item>, talk <npc>, attack <npc>, inventory (or i), quests (or q)\n\n");
     printf("System:\n");
     printf("  help, save, load, quit\n\n");
     return RESULT_OK;

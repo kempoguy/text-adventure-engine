@@ -16,8 +16,10 @@
 #include "core/constants.h"
 #include "core/game.h"
 #include "core/logger.h"
+#include "gameplay/quests.h"
 #include "story/ini_parser.h"
 #include "world/items.h"
+#include "world/npcs.h"
 
 /**
  * save_exists() - Check if save file exists
@@ -103,9 +105,21 @@ int save_game(GameState *game, int slot)
 
 	/* Write quests */
 	fprintf(f, "[QUESTS]\n");
-	fprintf(f, "quest_count=%d\n", game->quest_count);
-	for (i = 0; i < game->quest_count; i++) {
-		fprintf(f, "quest_%d=%d\n", i, game->quest_flags[i]);
+	fprintf(f, "quest_count=%d\n", game->story->quest_count);
+	for (i = 0; i < game->story->quest_count; i++) {
+		if (game->story->quests[i].completed) {
+			fprintf(f, "completed_%s=true\n", game->story->quests[i].id);
+		}
+	}
+	fprintf(f, "\n");
+
+	/* Write NPC states */
+	fprintf(f, "[NPCS]\n");
+	fprintf(f, "npc_count=%d\n", game->story->npc_count);
+	for (i = 0; i < game->story->npc_count; i++) {
+		if (game->story->npcs[i].defeated) {
+			fprintf(f, "defeated_%s=true\n", game->story->npcs[i].id);
+		}
 	}
 
 	fclose(f);
@@ -214,8 +228,37 @@ int save_game(GameState *game, int slot)
 		}
 		/* QUESTS section */
 		else if (strcmp(current_section, "QUESTS") == 0) {
-			if (strncmp(key, "quest_", 6) == 0) {
-				/* TODO: Implement quest loading when quest system exists */
+			if (strncmp(key, "completed_", 10) == 0) {
+				/* Extract quest ID (after "completed_") */
+				const char *quest_id = key + 10;
+				
+				/* Find quest in story */
+				Quest *quest = find_quest_by_id(game->story->quests,
+				                               game->story->quest_count,
+				                               quest_id);
+				if (quest && strcmp(value, "true") == 0) {
+					quest->completed = true;
+					add_log_entry("Loaded completed quest: %s at %s",
+					             quest_id, log_timestamp());
+				}
+			}
+		}
+
+		/* NPCS section */
+		else if (strcmp(current_section, "NPCS") == 0) {
+			if (strncmp(key, "defeated_", 9) == 0) {
+				/* Extract NPC ID (after "defeated_") */
+				const char *npc_id = key + 9;
+				
+				/* Find NPC in story */
+				NPC *npc = find_npc_by_id(game->story->npcs,
+				                         game->story->npc_count,
+				                         npc_id);
+				if (npc && strcmp(value, "true") == 0) {
+					npc->defeated = true;
+					add_log_entry("Loaded defeated NPC: %s at %s",
+					             npc_id, log_timestamp());
+				}
 			}
 		}
 	}

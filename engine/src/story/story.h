@@ -107,6 +107,15 @@ typedef struct Item {
  * @dialog: Array of dialog lines
  * @dialog_count: Number of dialog lines
  * @dialog_index: Current dialog line (cycles through)
+ * @hostile: Can be fought
+ * @combat_hp: NPC Health (hits to defeat)
+ * @combat_damage: Damage NPC does per hit
+ * @required_item: Item that boost chance of success
+ * @base_win_chance: Base hit chance (0.75)
+ * @item_win_chance: Hit chance with required item (0.95)
+ * @defeated: Permanently defeated
+ * @combat_text: Array of combat flavour messages
+ * @combat_text_count: Number of combat messages
  */
 
 typedef struct NPC {
@@ -117,6 +126,17 @@ typedef struct NPC {
 	char **dialog;
 	int dialog_count;
 	int dialog_index;
+
+	/* Combat fields */
+	bool hostile;                   
+	int combat_hp;                  
+	int combat_damage;               
+	char required_item[ITEM_ID_SIZE]; 
+	float base_win_chance;          
+	float item_win_chance;          
+	bool defeated;                
+	char **combat_text;             
+	int combat_text_count;          
 } NPC;
 
 

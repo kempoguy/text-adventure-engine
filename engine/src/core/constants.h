@@ -75,6 +75,11 @@
 #define QUEST_NAME_SIZE            128
 #define QUEST_DESCRIPTION_SIZE     512
 #define QUEST_COMPLETION_ID_SIZE   64
+#define COMBAT_MSG_SIZE            512
+#define COMBAT_MAX_HP              10
+#define COMBAT_BASE_WIN_CHANCE     0.75f
+#define COMBAT_ITEM_WIN_CHANCE     0.95f
+#define COMBAT_FLEE_CHANCE         0.05f
 
 #endif /* CONSTANTS_H */
 

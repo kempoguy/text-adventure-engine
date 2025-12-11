@@ -143,9 +143,15 @@ CommandType get_command_type(const char* verb) {
         return CMD_TALK;
     }
 
+    // ATTACK commands
+    if (strcmp(verb, "attack") == 0 || strcmp(verb, "fight") == 0 ||
+        strcmp(verb, "hit") == 0 || strcmp(verb, "kill") == 0) {
+        return CMD_ATTACK;
+    }
+
     // QUESTS commands
     if (strcmp(verb, "quests") == 0 ||strcmp(verb, "quest") == 0 ||
-        strcmp(verb, "objectives") == 0) {
+        strcmp(verb, "objectives") == 0 || strcmp(verb, "q") == 0) {
             return CMD_QUESTS;
         }
     
@@ -165,8 +171,7 @@ CommandType get_command_type(const char* verb) {
     }
     
     // QUIT commands
-    if (strcmp(verb, "quit") == 0 || strcmp(verb, "exit") == 0 ||
-        strcmp(verb, "q") == 0) {
+    if (strcmp(verb, "quit") == 0 || strcmp(verb, "exit") == 0) {
         return CMD_QUIT;
     }
     

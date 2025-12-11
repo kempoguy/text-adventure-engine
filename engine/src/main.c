@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <time.h>
 
 #include "main.h"
 #include "core/commands.h"
@@ -48,6 +49,9 @@ int main(int argc, char** argv) {
 
     bool debug_mode = false;
     char logfile[LOG_FILENAME_SIZE];
+
+    /* Seed random number generator */
+    srand((unsigned int)time(NULL));
 
     /* Parse command line arguments */
     for (int i = 1; i < argc; i ++) {

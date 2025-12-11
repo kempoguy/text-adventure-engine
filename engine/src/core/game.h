@@ -27,6 +27,9 @@
  * @death_count: Number of times player has died
  * @turn_count: Number of turns elapsed
  * @score: Current player score
+ * @respawn_room: Room to respawn after death
+ * @combat_npc: Currently fighting this NPC (NULL if not in combat)
+ * @player_combat_hp: Player HP in current combat
  * @game_won: True if player has achieved victory
  *
  * Contains all mutable game state including player position, inventory, 
@@ -34,17 +37,22 @@
  */
 
 typedef struct {
-    Story* story;              // Currently loaded story
-    Room* current_room;        // Current room player is in
-    Item** inventory;          // Player inventory (array of pointers)
-    int inventory_count;       // Number of items in inventory
-    int inventory_weight;      // Total weight carried
-    int* quest_flags;          // Quest completion flags
-    int quest_count;           // Number of quests
-    int death_count;           // Number of times player died
-    int turn_count;            // Number of turns taken
-    int score;                 // Current score
-    bool game_won;             // Has player won?
+    Story* story;             
+    Room* current_room;        
+    Item** inventory;          
+    int inventory_count;      
+    int inventory_weight;     
+    int* quest_flags;        
+    int quest_count;          
+    int death_count;         
+    int turn_count;         
+    int score;               
+    char respawn_room[ROOM_ID_SIZE];
+
+    /* Combat state */
+    NPC *combat_npc;
+    int player_combat_hp;
+    bool game_won;            
 } GameState;
 
 

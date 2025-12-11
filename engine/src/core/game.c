@@ -92,6 +92,12 @@ GameState* init_game_state(Story* story) {
     game->death_count = 0;
     game->turn_count = 0;
     game->score = 0;
+    strncpy(game->respawn_room, story->metadata.start_room, ROOM_ID_SIZE - 1);
+    
+    /* Initialize combat state */
+    game->combat_npc = NULL;
+    game->player_combat_hp = COMBAT_MAX_HP;
+    
     game->game_won = false;
     
     add_log_entry("Game initialized: room=%s, inventory_slots=%d at %s",

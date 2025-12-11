@@ -40,6 +40,7 @@ typedef enum {
     CMD_INVENTORY,
     CMD_USE,
     CMD_TALK,
+    CMD_ATTACK,
     CMD_QUESTS,
     CMD_HELP,
     CMD_SAVE,

@@ -134,6 +134,18 @@ int load_npcs(const char *story_dir, NPC **npcs_out)
 				npc_array[current_npc].dialog = NULL;
 				npc_array[current_npc].dialog_count = 0;
 				npc_array[current_npc].dialog_index = 0;
+
+				/* Initialize combat fields */
+				npc_array[current_npc].hostile = false;
+				npc_array[current_npc].combat_hp = 0;
+				npc_array[current_npc].combat_damage = 0;
+				npc_array[current_npc].required_item[0] = '\0';
+				npc_array[current_npc].base_win_chance = COMBAT_BASE_WIN_CHANCE;
+				npc_array[current_npc].item_win_chance = COMBAT_ITEM_WIN_CHANCE;
+				npc_array[current_npc].defeated = false;
+				npc_array[current_npc].combat_text = NULL;
+				npc_array[current_npc].combat_text_count = 0;
+
 			}
 			continue;
 		}
@@ -165,6 +177,31 @@ int load_npcs(const char *story_dir, NPC **npcs_out)
 
 				/* Store dialog line */
 				npc->dialog[dialog_index] = strdup(value);
+			} else if (strcmp(key, "hostile") == 0) {
+				npc->hostile = (strcmp(value, "true") == 0);
+			} else if (strcmp(key, "combat_hp") == 0) {
+				npc->combat_hp = atoi(value);
+			} else if (strcmp(key, "combat_damage") == 0) {
+				npc->combat_damage = atoi(value);
+			} else if (strcmp(key, "required_item") == 0) {
+				strncpy(npc->required_item, value, ITEM_ID_SIZE - 1);
+			} else if (strcmp(key, "base_win_chance") == 0) {
+				npc->base_win_chance = atof(value);
+			} else if (strcmp(key, "item_win_chance") == 0) {
+				npc->item_win_chance = atof(value);
+			} else if (strncmp(key, "combat_text_", 12) == 0) {
+				/* Extract combat text index */
+				int combat_index = atoi(key + 12);
+
+				/* Expand combat_text array if needed */
+				if (combat_index >= npc->combat_text_count) {
+					npc->combat_text = realloc(npc->combat_text,
+					                          (combat_index + 1) * sizeof(char*));
+					npc->combat_text_count = combat_index + 1;
+				}
+
+				/* Store combat text line */
+				npc->combat_text[combat_index] = strdup(value);
 			}
 		}
 	}

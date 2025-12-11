@@ -134,6 +134,17 @@ CommandResult cmd_talk(GameState* game, Command* cmd);
 
 
 /**
+ * cmd_attack() - Attack a hostile NPC
+ * @game: Pointer to current game state
+ * @cmd: Pointer to parsed command
+
+ * Return: Command execution result
+ */
+
+CommandResult cmd_attack(GameState* game, Command* cmd);
+
+
+/**
  * cmd_quests() - List quests
  * @game: Pointer to current game state
  * @cmd: Pointer to parsed command
